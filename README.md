@@ -1,4 +1,4 @@
-#AWS Serverless Python CRUD API
+# AWS Serverless Python CRUD API
 quizeapp using serverless framework aws .
 
 <br>
@@ -7,8 +7,9 @@ quizeapp using serverless framework aws .
 
 <hr>
 
-the porpose of the project is building a CRUD (Create, Read, Update, Delete) API using AWS Lambda functions(Python) with DynamoDB, and the Serverless Framework.
-##Technologies :
-AWS Lambda
-python
-Serverless Framework
+the porpose of the project is building a **CRUD** (Create, Read, Update, Delete) API using [ AWS Lambda functions(Python) with DynamoDB, and the Serverless Framework ].
+<br>
+## Technologies :
+- AWS Lambda
+- python
+- Serverless Framework
