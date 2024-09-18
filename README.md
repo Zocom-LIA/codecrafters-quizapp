@@ -1,10 +1,14 @@
-# codecrafters-quizeapp
+#AWS Serverless Python CRUD API
 quizeapp using serverless framework aws .
-<hr>
+
 <br>
 
 ![images](https://github.com/user-attachments/assets/33b41f32-896f-4447-9396-04b9417cc38b)
 
+<hr>
 
-
-the porpose of the project is building a CRUD Python serverless API with DynamoDB using the Serverless Framework.
+the porpose of the project is building a CRUD (Create, Read, Update, Delete) API using AWS Lambda functions(Python) with DynamoDB, and the Serverless Framework.
+##Technologies :
+AWS Lambda
+python
+Serverless Framework
