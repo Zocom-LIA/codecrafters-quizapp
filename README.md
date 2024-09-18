@@ -13,3 +13,4 @@ the porpose of the project is building a **CRUD** (Create, Read, Update, Delete)
 - AWS Lambda
 - python
 - Serverless Framework
+- Boto3 : The AWS SDK for Python
