@@ -14,3 +14,4 @@ the porpose of the project is building a **CRUD** (Create, Read, Update, Delete)
 - python
 - Serverless Framework
 - Boto3 : The AWS SDK for Python
+- serverless-iam-roles-per-function plugin 
