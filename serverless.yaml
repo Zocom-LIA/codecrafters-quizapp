@@ -1,0 +1,52 @@
+service: quiz-app
+
+provider:
+    # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
+    name: dev
+    runtime: python3.12
+    region: us-east-1
+
+plugins:
+    # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
+    - serverless-offline
+
+functions:
+    seedData:
+        handler: handler.seed_data
+        events:
+            - http:
+                  path: seed
+                  method: post
+    # Quiz CRUD
+    createQuiz:
+        handler: handler.create_quiz
+        events:
+            - http:
+                  path: quiz
+                  method: post
+    getQuizById:
+        handler: handler.get_quiz_by_id
+        events:
+            - http:
+                  path: quiz/{quizId}
+                  method: get
+    getAllQuizzes:
+        handler: handler.get_all_quizzes
+        events:
+            - http:
+                  path: quiz
+                  method: get
+
+resources:
+    Resources:
+        QuizTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                TableName: QuizTable
+                AttributeDefinitions:
+                    - AttributeName: quizId
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: quizId
+                      KeyType: HASH
+                BillingMode: PAY_PER_REQUEST
