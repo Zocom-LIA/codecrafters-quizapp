@@ -13,3 +13,29 @@ provider:
 functions:
   hello:
     handler: handler.hello
+
+resources:
+  Resources:
+    QuizTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: QuizTable
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S   # Partition Key (Primary Key)
+          - AttributeName: SK
+            AttributeType: S   # Sort Key
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH      # Partition Key
+          - AttributeName: SK
+            KeyType: RANGE     # Sort Key
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        # Enable Point-in-time Recovery for safety (Optional)
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        # Table-level Encryption (Optional)
+        SSESpecification:
+          SSEEnabled: true
