@@ -4,7 +4,17 @@ provider:
     # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
     name: dev
     runtime: python3.12
-    region: us-east-1
+    region: us-north-1
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+          Resource: 'arn:aws:dynamodb:us-north-1:*:table/*'
 
 plugins:
     # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
@@ -44,9 +54,21 @@ resources:
             Properties:
                 TableName: QuizTable
                 AttributeDefinitions:
-                    - AttributeName: quizId
-                      AttributeType: S
+                    - AttributeName: PK
+                      AttributeType: S # Partition Key (Primary Key)
+                    - AttributeName: SK
+                      AttributeType: S # Sort Key
                 KeySchema:
-                    - AttributeName: quizId
-                      KeyType: HASH
-                BillingMode: PAY_PER_REQUEST
+                    - AttributeName: PK
+                      KeyType: HASH # Partition Key
+                    - AttributeName: SK
+                      KeyType: RANGE # Sort Key
+                ProvisionedThroughput:
+                    ReadCapacityUnits: 5
+                    WriteCapacityUnits: 5
+                # Enable Point-in-time Recovery for safety (Optional)
+                PointInTimeRecoverySpecification:
+                    PointInTimeRecoveryEnabled: true
+                # Table-level Encryption (Optional)
+                SSESpecification:
+                    SSEEnabled: true
