@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key
 
 
 # True for now as we need to test it in locally first
-if True:
+if False:
     dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8000/')
 else:
     dynamodb = boto3.resource('dynamodb')
