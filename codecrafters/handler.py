@@ -64,9 +64,15 @@ def create_quiz(event, context):
         }
     )
 
+    created_quiz = {
+        'quizId': quiz_id,
+        'title': data['title'],
+        'description': data['description']
+    }
+
     return {
         'statusCode': 201,
-        'body': json.dumps({'message': 'Quiz created successfully'})
+        'body': json.dumps({'message': 'Quiz created successfully', 'quiz': created_quiz})
     }
 
 
