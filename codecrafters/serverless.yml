@@ -1,5 +1,3 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: zocominternship
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: quizapp
 # "service" is the name of this project. This will also be added to your AWS resource names.
@@ -56,6 +54,7 @@ resources:
     Resources:
         QuizTable:
             Type: AWS::DynamoDB::Table
+            DeletionPolicy: Retain
             Properties:
                 TableName: QuizTable
                 AttributeDefinitions:
