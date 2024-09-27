@@ -1,5 +1,8 @@
 import json
 import boto3
+import uuid
+from boto3.dynamodb.conditions import Key
+
 
 # True for now as we need to test it in locally first
 if True:
@@ -18,12 +21,12 @@ def seed_data(event, context):
     # Sample Quizzes
     quizzes = [
         {
-            "quizId": "1",
+            "quizId": str(uuid.uuid4()),
             "title": "Python Basics",
             "description": "A quiz on basic Python concepts."
         },
         {
-            "quizId": "2",
+            "quizId": str(uuid.uuid4()),
             "title": "AWS Fundamentals",
             "description": "A quiz on AWS core services."
         }
@@ -31,7 +34,14 @@ def seed_data(event, context):
 
     # Insert Quizzes
     for quiz in quizzes:
-        table.put_item(Item=quiz)
+        table.put_item(
+            Item={
+                'PK': f"QUIZ#{quiz['quizId']}",
+                'SK': f"METADATA",
+                'title': quiz['title'],
+                'description': quiz['description']
+            }
+        )
 
     return {
         'statusCode': 201,
@@ -42,15 +52,15 @@ def seed_data(event, context):
 
 def create_quiz(event, context):
     data = json.loads(event['body'])
-    quizId = data['quizId']
-    title = data['title']
-    description = data['description']
+
+    quiz_id = str(uuid.uuid4())
 
     table.put_item(
         Item={
-            'quizId': quizId,
-            'title': title,
-            'description': description
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': 'METADATA',
+            'title': data['title'],
+            'description': data['description']
         }
     )
 
@@ -61,28 +71,52 @@ def create_quiz(event, context):
 
 
 def get_quiz_by_id(event, context):
-    quizId = event['pathParameters']['quizId']
+    quiz_id = event['pathParameters']['quizId']
 
-    response = table.get_item(
-        Key={'quizId': quizId}
+    response = table.query(
+        KeyConditionExpression=Key('PK').eq(f"QUIZ#{quiz_id}")
     )
 
-    item = response.get('Item')
-    if item:
-        return {
-            'statusCode': 200,
-            'body': json.dumps(item)
-        }
-    else:
+    items = response.get('Items', [])
+
+    if not items:
         return {
             'statusCode': 404,
-            'body': json.dumps({'error': 'Quiz not found'})
+            'body': json.dumps({'message': 'Quiz not found'})
         }
 
+    quiz_metadata = next((item for item in items if item['SK'] == 'METADATA'), None)
 
-def get_all_quizzes(event, context):
-    response = table.scan()
+    if not quiz_metadata:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Quiz metadata not found'})
+        }
+
     return {
         'statusCode': 200,
-        'body': json.dumps(response['Items'])
+        'body': json.dumps({
+            'quizId': quiz_id,
+            'title': quiz_metadata['title'],
+            'description': quiz_metadata['description'],
+        })
+    }
+
+def get_all_quizzes(event, context):
+    response = table.scan(
+        FilterExpression="SK = :metadata",
+        ExpressionAttributeValues={":metadata": "METADATA"}
+    )
+    items = response.get('Items', [])
+    quizzes = []
+    for item in items:
+        quizzes.append({
+            'quizId': item['PK'].split('#')[1],
+            'title': item['title'],
+            'description': item['description']
+        })
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'quizzes': quizzes})
     }
