@@ -126,3 +126,94 @@ def get_all_quizzes(event, context):
         'statusCode': 200,
         'body': json.dumps({'quizzes': quizzes})
     }
+
+
+def update_quiz(event, context):
+    quiz_id = event['pathParameters']['quizId']
+    data = json.loads(event['body'])
+
+    # Check if the quiz exists
+    response = table.query(
+        KeyConditionExpression=Key('PK').eq(f"QUIZ#{quiz_id}")
+    )
+    items = response.get('Items', [])
+
+    if not items:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Quiz not found'})
+        }
+
+    quiz_metadata = next((item for item in items if item['SK'] == 'METADATA'), None)
+
+    if not quiz_metadata:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Quiz metadata not found'})
+        }
+
+    # Update the quiz data
+    table.update_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': 'METADATA'
+        },
+        UpdateExpression='SET #title = :title, #description = :description',
+        ExpressionAttributeNames={
+            '#title': 'title',
+            '#description': 'description'
+        },
+        ExpressionAttributeValues={
+            ':title': data.get('title'),
+            ':description': data.get('description')
+        }
+    )
+
+    updated_quiz = {
+        'quizId': quiz_id,
+        'title': quiz_metadata.get('title') or data.get('title'),
+        'description': quiz_metadata.get('description') or data.get('description')
+    }
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'message': 'Quiz updated successfully',
+            'quiz': updated_quiz
+        })
+    }
+def delete_quiz(event, context):
+    quiz_id = event['pathParameters']['quizId']
+
+    # Check if the quiz exists
+    response = table.query(
+        KeyConditionExpression=Key('PK').eq(f"QUIZ#{quiz_id}")
+    )
+    items = response.get('Items', [])
+
+    if not items:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Quiz not found'})
+        }
+
+    quiz_metadata = next((item for item in items if item['SK'] == 'METADATA'), None)
+
+    if not quiz_metadata:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Quiz metadata not found'})
+        }
+
+    # Delete the quiz
+    table.delete_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': 'METADATA'
+        }
+    )
+
+    return {
+        'statusCode': 204,
+        'body': json.dumps({'message': 'Quiz deleted successfully'})
+    }

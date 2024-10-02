@@ -49,6 +49,19 @@ functions:
             - http:
                   path: quiz
                   method: get
+    updateQuiz:
+        handler: handler.update_quiz
+        events:
+            - http:
+                  path: quiz/{quizId}
+                  method: put
+    deleteQuiz:
+        handler: handler.delete_quiz
+        events:
+            - http:
+                  path: quiz/{quizId}
+                  method: delete                          
+
 
 resources:
     Resources:
