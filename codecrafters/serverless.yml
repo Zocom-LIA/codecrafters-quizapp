@@ -4,88 +4,128 @@ app: quizapp
 service: codecrafters
 
 provider:
-    # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
-    name: aws
-    runtime: python3.12
-    region: eu-north-1
-    iamRoleStatements:
-        - Effect: Allow
-          Action:
-              - dynamodb:Query
-              - dynamodb:Scan
-              - dynamodb:GetItem
-              - dynamodb:PutItem
-              - dynamodb:UpdateItem
-              - dynamodb:DeleteItem
-          Resource: 'arn:aws:dynamodb:eu-north-1:*:table/*'
+  # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
+  name: aws
+  runtime: python3.12
+  region: eu-north-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 'arn:aws:dynamodb:eu-north-1:*:table/*'
 
 plugins:
-    # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
-    - serverless-offline
+  # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
+  - serverless-offline
 
 functions:
-    seedData:
-        handler: handler.seed_data
-        events:
-            - http:
-                  path: seed
-                  method: post
-    # Quiz CRUD
-    createQuiz:
-        handler: handler.create_quiz
-        events:
-            - http:
-                  path: quiz
-                  method: post
-    getQuizById:
-        handler: handler.get_quiz_by_id
-        events:
-            - http:
-                  path: quiz/{quizId}
-                  method: get
-    getAllQuizzes:
-        handler: handler.get_all_quizzes
-        events:
-            - http:
-                  path: quiz
-                  method: get
-    updateQuiz:
-        handler: handler.update_quiz
-        events:
-            - http:
-                  path: quiz/{quizId}
-                  method: put
-    deleteQuiz:
-        handler: handler.delete_quiz
-        events:
-            - http:
-                  path: quiz/{quizId}
-                  method: delete                          
+  seedData:
+    handler: handler.seed_data
+    events:
+      - http:
+          path: seed
+          method: post
 
+  # Quiz CRUD
+  createQuiz:
+    handler: handler.create_quiz
+    events:
+      - http:
+          path: quiz
+          method: post
+
+  getQuizById:
+    handler: handler.get_quiz_by_id
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: get
+
+  getAllQuizzes:
+    handler: handler.get_all_quizzes
+    events:
+      - http:
+          path: quiz
+          method: get
+
+  updateQuiz:
+    handler: handler.update_quiz
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: put
+
+  deleteQuiz:
+    handler: handler.delete_quiz
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: delete
+
+  seedDataQuestions:
+    handler: handler.seed_data_questions
+    events:
+      - http:
+          path: seed-questions
+          method: post
+
+  # Question CRUD
+  createQuestion:
+    handler: handler.create_question
+    events:
+      - http:
+          path: quiz/{quizId}/question
+          method: post
+
+  getQuestionsByQuiz:
+    handler: handler.get_questions_by_quiz
+    events:
+      - http:
+          path: quiz/{quizId}/questions
+          method: get
+
+  updateQuestion:
+    handler: handler.update_question
+    events:
+      - http:
+          path: quiz/{quizId}/question/{questionId}
+          method: put
+
+  deleteQuestion:
+    handler: handler.delete_question
+    events:
+      - http:
+          path: quiz/{quizId}/question/{questionId}
+          method: delete                                
 
 resources:
-    Resources:
-        QuizTable:
-            Type: AWS::DynamoDB::Table
-            DeletionPolicy: Retain
-            Properties:
-                TableName: QuizTable
-                AttributeDefinitions:
-                    - AttributeName: PK
-                      AttributeType: S # Partition Key (Primary Key)
-                    - AttributeName: SK
-                      AttributeType: S # Sort Key
-                KeySchema:
-                    - AttributeName: PK
-                      KeyType: HASH # Partition Key
-                    - AttributeName: SK
-                      KeyType: RANGE # Sort Key
-                ProvisionedThroughput:
-                    ReadCapacityUnits: 5
-                    WriteCapacityUnits: 5
-                # Enable Point-in-time Recovery for safety (Optional)
-                PointInTimeRecoverySpecification:
-                    PointInTimeRecoveryEnabled: true
-                # Table-level Encryption (Optional)
-                SSESpecification:
-                    SSEEnabled: true
+  Resources:
+    QuizTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: QuizTable
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S # Partition Key (Primary Key)
+          - AttributeName: SK
+            AttributeType: S # Sort Key
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH # Partition Key
+          - AttributeName: SK
+            KeyType: RANGE # Sort Key
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        # Enable Point-in-time Recovery for safety (Optional)
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        # Table-level Encryption (Optional)
+        SSESpecification:
+          SSEEnabled: true
