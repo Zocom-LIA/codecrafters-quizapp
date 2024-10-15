@@ -1,0 +1,35 @@
+:root {
+    --header: #a262e3;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: var(--header);
+  height:486px;
+  color: white;
+  display: flex;
+  justify-content: center;
+}
+
+.content {
+  background-color: lightgrey;
+  flex: 1 0 auto;
+  padding: 20px;
+}
+
+.footer {
+  background-color: var(--header);
+  color: white;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 5px
+}
