@@ -33,6 +33,8 @@ document.getElementById('apiButton').addEventListener('click', async () => {
         // Get the parent container element
         const quizzesContainer = document.getElementById('quizzes-container')
 
+        const quizDescriptionParameter = 'quiz_description.html?quizId=';
+
         // Create and append 3 new div elements in a loop
         for (let i = 0; i < quizData['quizzes'].length; i++) {
             // Temporary limit until we implement pagination/arrows
@@ -46,9 +48,9 @@ document.getElementById('apiButton').addEventListener('click', async () => {
                 quizImage.src = imagePaths[i % 3];
                 quizImage.alt = imageAltTexts[i % 3];
 
-
                 var quizTitle = document.createElement('a');
-                quizTitle.setAttribute('href', "yourlink.htm");
+                quizTitle.setAttribute('href', quizDescriptionParameter + quizData['quizzes'][i]['quizId']);
+
                 quizTitle.innerText = quizData['quizzes'][i]['title'];
 
                 // const quizTitle = document.createElement('p');

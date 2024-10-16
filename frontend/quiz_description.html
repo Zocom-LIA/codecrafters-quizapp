@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Description</title>
+</head>
+
+<body>
+    <h1>Quiz Description</h1>
+    <div id="quiz-description"></div>
+
+    <script>
+        // Function to extract query parameters
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Get the quiz ID from the URL
+        const quizId = getQueryParam('quizId');
+        console.log(quizId);
+
+
+        // Fetch and display quiz description dynamically based on the quiz ID
+        if (quizId) {
+            document.getElementById('quiz-description').innerText = quizId
+        } else {
+            document.getElementById('quiz-description').innerText = 'No quiz selected.';
+        }
+    </script>
+</body>
+
+</html>
