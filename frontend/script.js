@@ -1,117 +1,63 @@
-// Call the API to get all quizzes
-async function fetchQuizzes() {
-    const apiUrl = 'http://localhost:3000/dev/quiz';
+// Add a listener to the init function, so it runs when the DOM is fully loaded
+// This ensures that the API call and displaying of quizzes happens as soon as possible
+document.addEventListener('DOMContentLoaded', init);
 
-    try {
-        const response = await fetch(apiUrl);
-
-        // Check if the response was successful
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-
-        const data = await response.json(); // Parse JSON response
-        return data; // Return the data to be used elsewhere
-    } catch (error) {
-        console.error('Fetch error:', error);
-        throw error; // Propagate error if needed
-    }
+function init() {
+    getQuizzes()
+        .then(data => displayQuizzes(data))  // Pass the fetched data to the display function
+        .catch(error => {
+            console.error('Error fetching quizzes:', error);
+        });
 }
 
-// For testing purposes
-const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
-const imageAltTexts = ["C++", "Python", "Java"];
-
-// Add event listener to the button to call the fetchQuizzes function
-document.getElementById('apiButton').addEventListener('click', async () => {
-    try {
-        const quizData = await fetchQuizzes();
-        // const quizData = JSON.parse(apiData);
-        console.log(quizData);
-        // document.getElementById('jsonTest').innerText = quizData['quizzes'][1]['title'];
-
-        // Get the parent container element
-        const quizzesContainer = document.getElementById('quizzes-container')
-
-        const quizDescriptionParameter = 'quiz_description.html?quizId=';
-
-        // Create and append 3 new div elements in a loop
-        for (let i = 0; i < quizData['quizzes'].length; i++) {
-            // Temporary limit until we implement pagination/arrows
-            if (i < 3) {
-                // Element for the quiz option (tile that inlcudes image and title)
-                const quizOption = document.createElement('div');
-
-                let quizImage = document.createElement('img');
-
-                // For testing purposes
-                quizImage.src = imagePaths[i % 3];
-                quizImage.alt = imageAltTexts[i % 3];
-
-                var quizTitle = document.createElement('a');
-                quizTitle.setAttribute('href', quizDescriptionParameter + quizData['quizzes'][i]['quizId']);
-
-                quizTitle.innerText = quizData['quizzes'][i]['title'];
-
-                // const quizTitle = document.createElement('p');
-                // quizTitle.innerText = quizData['quizzes'][i]['title'];
-
-                quizOption.appendChild(quizImage);
-                quizOption.appendChild(quizTitle);
-
-                quizOption.setAttribute('class', 'quiz-option');
-                // quizOption.style.padding = '10px';
-                // quizOption.style.border = '1px solid black';
-                // quizOption.style.marginBottom = '5px';
-
-                // Append the new div to the container
-                quizzesContainer.appendChild(quizOption);
+// Function to get quizzes from the API
+function getQuizzes() {
+    return fetch('http://localhost:3000/dev/quiz')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
+            return response.json(); // Parse JSON data
+        });
+}
+
+// Function to display the quizzes in the quiz-options element
+function displayQuizzes(quizzes) {
+    // This is for testing purposes, we should instead use a map
+    // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
+    const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
+    const imageAltTexts = ["C++", "Python", "Java"];
+
+    // Get the parent container element (quiz-options)
+    const quizzesContainer = document.getElementById('quizzes-container')
+    const quizDescriptionParameter = 'quiz_description.html?quizId=';
+
+    // Create and append 3 new div elements in a loop
+    // This is a temporary limit until we implement pagination/arrows or another approach
+    // We should then change the for loop to a foreach, to improve code readability
+    for (let i = 0; i < quizzes['quizzes'].length; i++) {
+        if (i < 3) {
+            // Element for the quiz option (tile that includes image and title)
+            const quizOption = document.createElement('div');
+
+            let quizImage = document.createElement('img');
+
+            // For testing purposes (for loopoing between the already available images)
+            quizImage.src = imagePaths[i % 3];
+            quizImage.alt = imageAltTexts[i % 3];
+
+            var quizTitle = document.createElement('a');
+            quizTitle.setAttribute('href', quizDescriptionParameter + quizzes['quizzes'][i]['quizId']);
+            quizTitle.innerText = quizzes['quizzes'][i]['title'];
+
+            // Add image and anchor elements to their parent element - quiz-options
+            quizOption.appendChild(quizImage);
+            quizOption.appendChild(quizTitle);
+
+            quizOption.setAttribute('class', 'quiz-option');
+
+            // Append the quiz-option div to the container (quiz-options)
+            quizzesContainer.appendChild(quizOption);
         }
-    } catch (error) {
-        console.error('Error handling API data:', error);
     }
-});
-
-
-
-
-
-// // Add event listener to the button to call the fetchQuizzes function
-// document.getElementById('apiButton').addEventListener('click', async () => {
-//     try {
-//         const quizData = await fetchQuizzes();
-//         // const quizData = JSON.parse(apiData);
-//         console.log(quizData);
-//         // document.getElementById('jsonTest').innerText = quizData['quizzes'][1]['title'];
-
-//         // Get the parent container element
-//         const container = document.getElementById('quiz-options-container')
-
-//         // Create and append 5 new div elements in a loop
-//         for (let i = 0; i < quizData['quizzes'].length; i++) {
-//             // Create a new div element
-//             const newDiv = document.createElement('div');
-
-//             // Set the content of the new div
-//             newDiv.innerText = quizData['quizzes'][i]['title'] + ' ' + quizData['quizzes'][i]['quizId'];
-
-//             // Optionally, set some attributes or styles
-//             newDiv.setAttribute('class', 'dynamic-div');
-//             newDiv.style.padding = '10px';
-//             newDiv.style.border = '1px solid black';
-//             newDiv.style.marginBottom = '5px';
-
-//             // Append the new div to the container
-//             container.appendChild(newDiv);
-//         }
-//     } catch (error) {
-//         console.error('Error handling API data:', error);
-//     }
-// });
-
-
-
-
-
-
+}
