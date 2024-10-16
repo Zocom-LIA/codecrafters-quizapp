@@ -1,0 +1,106 @@
+:root {
+    --header: #a262e3;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: 'Poppins';font-size: 22px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0%;
+
+    /* text-align: center;
+      justify-content: center; */
+}
+
+.header {
+    background-color: var(--header);
+    height: 70%;
+    color: white;
+
+    padding: 20px;
+   display: flex;
+   align-items: center;
+  justify-content: center;
+}
+
+.footer {
+    background-color: var(--header);
+    color: white;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 5px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+.home-logo {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 30px;
+    cursor: pointer;
+    }
+.quiz-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+.description-box {
+    height: 100px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #8e44ad; /* Match with the container's purple color */
+    font-size: 16px;
+    background-color: #f8f8f8;
+    margin-bottom: 20px; /* Space between description and button */
+    color: #333;
+    text-align: left; /* Align the text to the left */
+}
+
+textarea {
+    width: 90%;
+    height: 70px; /* Adjust for 4-5 lines of input */
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #a262e3; /* Match with the container's purple color */
+    font-size: 16px;
+    resize: none;
+    outline: none;
+}
+
+/* Start Quiz Button */
+.start-quiz {
+    background-color: #a262e3; /* Darker purple */
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.start-quiz:hover {
+    background-color: #732d91; /* Even darker on hover */
+}
