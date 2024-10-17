@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
     getQuizzes()
-        .then(data => displayQuizzes(data))  // Pass the fetched data to the display function
+        // .then(data => displayQuizzes(data))  // Pass the fetched data to the display function
+        .then(data => storeQuizzes(data))  // Pass the fetched data to the display function
+        .then(displayQuizzes())
         .catch(error => {
             console.error('Error fetching quizzes:', error);
         });
@@ -21,8 +23,31 @@ function getQuizzes() {
         });
 }
 
+// Store quizzes to session storage
+function storeQuizzes(quizzes) {
+    sessionStorage.setItem('quizzes', JSON.stringify(quizzes))
+}
+
+// Retrieve the data from sessionStorage and parse it if it exists
+function loadQuizzes() {
+    const storedQuizzes = sessionStorage.getItem('quizzes');
+
+    if (storedQuizzes) {
+        try {
+            return JSON.parse(storedQuizzes);
+        } catch (error) {
+            console.error("Error parsing JSON from sessionStorage", error);
+            return null;
+        }
+    } else {
+        console.warn("No quiz data found in sessionStorage");
+        return null;
+    }
+}
+
 // Function to display the quizzes in the quiz-options element
-function displayQuizzes(quizzes) {
+function displayQuizzes() {
+    quizzes = loadQuizzes()
     // This is for testing purposes, we should instead use a map
     // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
     const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
