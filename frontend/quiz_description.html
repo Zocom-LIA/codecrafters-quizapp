@@ -9,26 +9,10 @@
 
 <body>
     <h1>Quiz Description</h1>
-    <div id="quiz-description">Selected quiz: </div>
+    <div id="quiz-description"></div>
 
     <script>
-        // Function to extract query parameters (the quiz id) from the homepage
-        // Consider moving to the script.js file
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        // Get the quiz ID from the URL
-        const quizId = getQueryParam('quizId');
-        console.log(quizId);
-
-        // TODO: Fetch and display quiz description dynamically based on the quiz ID
-        if (quizId) {
-            document.getElementById('quiz-description').innerText += quizId
-        } else {
-            document.getElementById('quiz-description').innerText = 'No quiz selected.';
-        }
+        document.getElementById('quiz-description').innerText += sessionStorage.getItem('selectedQuizId');
     </script>
 </body>
 

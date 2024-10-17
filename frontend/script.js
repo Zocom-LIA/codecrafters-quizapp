@@ -4,9 +4,9 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
     getQuizzes()
-        // .then(data => displayQuizzes(data))  // Pass the fetched data to the display function
-        .then(data => storeQuizzes(data))  // Pass the fetched data to the display function
-        .then(displayQuizzes())
+        .then(data => storeQuizzes(data))   // Store the quizzes response
+        .then(displayQuizzes()) // Create quiz tiles
+        // .then(storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
         .catch(error => {
             console.error('Error fetching quizzes:', error);
         });
@@ -55,7 +55,7 @@ function displayQuizzes() {
 
     // Get the parent container element (quiz-options)
     const quizzesContainer = document.getElementById('quizzes-container')
-    const quizDescriptionParameter = 'quiz_description.html?quizId=';
+    const quizDescriptionDestination = 'quiz_description.html';
 
     // Create and append 3 new div elements in a loop
     // This is a temporary limit until we implement pagination/arrows or another approach
@@ -72,7 +72,8 @@ function displayQuizzes() {
             quizImage.alt = imageAltTexts[i % 3];
 
             var quizTitle = document.createElement('a');
-            quizTitle.setAttribute('href', quizDescriptionParameter + quizzes['quizzes'][i]['quizId']);
+            quizTitle.setAttribute('href', quizDescriptionDestination);
+            quizTitle.id = quizzes['quizzes'][i]['quizId']
             quizTitle.innerText = quizzes['quizzes'][i]['title'];
 
             // Add image and anchor elements to their parent element - quiz-options
@@ -85,4 +86,35 @@ function displayQuizzes() {
             quizzesContainer.appendChild(quizOption);
         }
     }
+    const links = document.querySelectorAll('a');
+
+    // Add click event listener to each anchor tag
+    links.forEach(link => {
+        link.addEventListener('click', function (event) {
+            // Get the ID of the clicked link
+            const linkId = this.id;
+
+            // Store the quiz id in session storage
+            sessionStorage.setItem('selectedQuizId', linkId);
+        });
+    });
+
+
+
+}
+
+// Function to add click event listeners to anchor tags
+function storeLinkIdOnClick() {
+    const links = document.querySelectorAll('a');
+
+    // Add click event listener to each anchor tag
+    links.forEach(link => {
+        link.addEventListener('click', function (event) {
+            // Get the ID of the clicked link
+            const linkId = this.id;
+
+            // Store the quiz id in session storage
+            sessionStorage.setItem('selectedQuizId', linkId);
+        });
+    });
 }
