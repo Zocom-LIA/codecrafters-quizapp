@@ -30,8 +30,7 @@ function displayQuizzes(quizzes) {
 
     // Get the parent container element (quiz-options)
     const quizzesContainer = document.getElementById('quizzes-container')
-    const quizDescriptionParameter = 'quiz_description.html?quizId=';
-
+   
     // Create and append 3 new div elements in a loop
     // This is a temporary limit until we implement pagination/arrows or another approach
     // We should then change the for loop to a foreach, to improve code readability
@@ -49,6 +48,16 @@ function displayQuizzes(quizzes) {
             var quizTitle = document.createElement('a');
             quizTitle.setAttribute('href', quizDescriptionParameter + quizzes['quizzes'][i]['quizId']);
             quizTitle.innerText = quizzes['quizzes'][i]['title'];
+            (function(quiz) {
+                quizTitle.addEventListener('click', function() {
+                    // Store quizId and description in localStorage
+                    localStorage.setItem('quizId', quiz.quizId);
+                    localStorage.setItem('quizDescription', quiz.description);
+
+                    // Redirect to the description page
+                    window.location.href = 'description.html';
+                });
+            })(quizzes['quizzes'][i]);  // Immediately invoked function with the current quiz
 
             // Add image and anchor elements to their parent element - quiz-options
             quizOption.appendChild(quizImage);
@@ -61,3 +70,22 @@ function displayQuizzes(quizzes) {
         }
     }
 }
+// This will run when the description.html page loads
+document.addEventListener('DOMContentLoaded', loadQuizDescription);
+
+function loadQuizDescription() {
+    // Get the quizId and quizDescription from localStorage
+    const quizId = localStorage.getItem('quizId');
+    const quizDescription = localStorage.getItem('quizDescription');
+
+    if (quizId && quizDescription) {
+        // Display the quiz description
+        document.getElementById('description-box').textContent = quizDescription;
+
+        // Update the Start Quiz button to link to question.html with the quizId
+        document.getElementById('start-quiz-link').setAttribute('href', `question.html?quizId=${quizId}`);
+    } else {
+        console.error('Quiz information not found in localStorage.');
+    }}
+   
+
