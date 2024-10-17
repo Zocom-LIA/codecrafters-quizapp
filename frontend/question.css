@@ -1,0 +1,136 @@
+:root {
+    --header: #a262e3;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.header-question {
+    background-color: var(--header);
+    height: 40%;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+}
+
+.python-question img {
+    width: 90px;
+    height: 90px;
+}
+
+/* Center the question number at the top */
+.question-number {
+    position: absolute;
+    top: 10px; /* Place the question number closer to the top */
+    left: 50%;
+    transform: translateX(-50%); /* Center it horizontally */
+}
+
+.question-number h3 {
+    margin: 0;
+}
+
+.question-text {
+    text-align: center;
+    margin: 0;
+    font-size: 24px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+.python-logo-to-description-page {
+    position: absolute;
+    top: 40%;
+    left: 5%;
+    width: 90px;
+    height: 90px;
+    cursor: pointer;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.answer-section {
+    width: 100%;
+}
+
+.answer-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 100px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.answer-option button {
+    width: 100%;
+    padding: 15px;
+    background-color: white;
+    border: 2px solid #a262e3;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 18px;
+}
+
+.answer-option button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Move submit button closer to the footer */
+.submit-button {
+    margin-top: 20px;
+    margin-bottom: 10px; /* Reduced bottom margin to bring it closer to the footer */
+    padding: 15px 30px;
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.submit-button:hover {
+    background-color: #8a4fb2;
+}
+
+.footer {
+    background-color: var(--header);
+    color: white;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
