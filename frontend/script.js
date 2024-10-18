@@ -12,10 +12,17 @@ function init() {
             .then(() => displayQuizzes()) // Create quiz tiles
             .then(() => storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
             .catch(error => {
-                console.error('Error fetching quizzes:', error);
+                console.error('Error fetching quizzes:', eror);
             });
     } else if (pathname === '/frontend/quiz_description.html') {
-
+        document.getElementById("start-quiz").addEventListener("click", function () {
+            const selectedQuizId = loadSelectedQuizId()
+            getQuestions(selectedQuizId)
+                .then(data => storeQuestions(data))  // Store the fetched questions
+                .catch(error => {
+                    console.error('Error fetching questions:', error);
+                });
+        });
     } else if (pathname === '/frontend/question.html') {
 
     }
@@ -62,6 +69,34 @@ function loadQuizzes() {
         }
     } else {
         console.warn("No quiz data found in sessionStorage");
+        return null;
+    }
+}
+
+function storeSelectedQuiz(selectedQuizId) {
+    sessionStorage.setItem('selectedQuizId', selectedQuizId);
+}
+
+function loadSelectedQuizId() {
+    return sessionStorage.getItem('selectedQuizId');
+}
+
+function storeQuestions(questions) {
+    sessionStorage.setItem('questions', JSON.stringify(questions))
+}
+
+function loadQuestions() {
+    const storedQuestions = sessionStorage.getItem('questions');
+
+    if (storedQuestions) {
+        try {
+            return JSON.parse(storedQuestions);
+        } catch (error) {
+            console.error("Error parsing JSON from sessionStorage", error);
+            return null;
+        }
+    } else {
+        console.warn("No question data found in sessionStorage");
         return null;
     }
 }
@@ -120,7 +155,7 @@ function storeLinkIdOnClick() {
             const linkId = this.id;
 
             // Store the quiz id in session storage
-            sessionStorage.setItem('selectedQuizId', linkId);
+            storeSelectedQuiz(linkId);
         });
     });
 }
