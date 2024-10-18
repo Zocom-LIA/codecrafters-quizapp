@@ -32,6 +32,18 @@ function getQuizzes() {
         });
 }
 
+// Function to get questions for a given quiz ID from the API
+function getQuestions(quizId) {
+    return fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            console.log()
+            return response.json();
+        });
+}
+
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
     sessionStorage.setItem('quizzes', JSON.stringify(quizzes))
