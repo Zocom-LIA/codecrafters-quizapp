@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', init);
 function init() {
     getQuizzes()
         .then(data => storeQuizzes(data))   // Store the quizzes response
-        .then(displayQuizzes()) // Create quiz tiles
-        // .then(storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
+        .then(() => displayQuizzes()) // Create quiz tiles
+        .then(() => storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
         .catch(error => {
             console.error('Error fetching quizzes:', error);
         });
@@ -47,7 +47,8 @@ function loadQuizzes() {
 
 // Function to display the quizzes in the quiz-options element
 function displayQuizzes() {
-    quizzes = loadQuizzes()
+    const quizzes = loadQuizzes()
+    console.log('Available quizzes: ' + quizzes['quizzes'].length)
     // This is for testing purposes, we should instead use a map
     // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
     const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
@@ -86,21 +87,6 @@ function displayQuizzes() {
             quizzesContainer.appendChild(quizOption);
         }
     }
-    const links = document.querySelectorAll('a');
-
-    // Add click event listener to each anchor tag
-    links.forEach(link => {
-        link.addEventListener('click', function (event) {
-            // Get the ID of the clicked link
-            const linkId = this.id;
-
-            // Store the quiz id in session storage
-            sessionStorage.setItem('selectedQuizId', linkId);
-        });
-    });
-
-
-
 }
 
 // Function to add click event listeners to anchor tags
