@@ -18,7 +18,7 @@ function init() {
         // here will be the quiz description page logic
         addStartQuizListener();
     } else if (pathname === '/frontend/question.html') {
-
+        displayQuestion();
     }
 }
 
@@ -137,6 +137,13 @@ function displayQuizzes() {
             quizzesContainer.appendChild(quizOption);
         }
     }
+}
+
+function displayQuestion() {
+    var currentQuestion = 1
+    var numOfQuestions = loadQuestions().length;
+    const questionNumberHeading = document.getElementById('heading-question-number')
+    questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
 }
 
 // Function to add click event listeners to anchor tags
