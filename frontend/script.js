@@ -53,7 +53,8 @@ function getQuestions(quizId) {
 
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
-    sessionStorage.setItem('quizzes', JSON.stringify(quizzes))
+    // sessionStorage.setItem('quizzes', JSON.stringify(quizzes))
+    sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']))
 }
 
 // Retrieve the data from sessionStorage and parse it if it exists
@@ -82,7 +83,7 @@ function loadSelectedQuizId() {
 }
 
 function storeQuestions(questions) {
-    sessionStorage.setItem('questions', JSON.stringify(questions))
+    sessionStorage.setItem('questions', JSON.stringify(questions['questions']))
 }
 
 function loadQuestions() {
@@ -116,7 +117,7 @@ function displayQuizzes() {
     // Create and append 3 new div elements in a loop
     // This is a temporary limit until we implement pagination/arrows or another approach
     // We should then change the for loop to a foreach, to improve code readability
-    for (let i = 0; i < quizzes['quizzes'].length; i++) {
+    for (let i = 0; i < quizzes.length; i++) {
         if (i < 3) {
             // Element for the quiz option (tile that includes image and title)
             const quizOption = document.createElement('div');
@@ -129,8 +130,8 @@ function displayQuizzes() {
 
             var quizTitle = document.createElement('a');
             quizTitle.setAttribute('href', quizDescriptionDestination);
-            quizTitle.id = quizzes['quizzes'][i]['quizId']
-            quizTitle.innerText = quizzes['quizzes'][i]['title'];
+            quizTitle.id = quizzes[i]['quizId']
+            quizTitle.innerText = quizzes[i]['title'];
 
             // Add image and anchor elements to their parent element - quiz-options
             quizOption.appendChild(quizImage);
