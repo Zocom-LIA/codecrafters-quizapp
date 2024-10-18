@@ -15,14 +15,8 @@ function init() {
                 console.error('Error fetching quizzes:', eror);
             });
     } else if (pathname === '/frontend/quiz_description.html') {
-        document.getElementById("start-quiz").addEventListener("click", function () {
-            const selectedQuizId = loadSelectedQuizId()
-            getQuestions(selectedQuizId)
-                .then(data => storeQuestions(data))  // Store the fetched questions
-                .catch(error => {
-                    console.error('Error fetching questions:', error);
-                });
-        });
+        // here will be the quiz description page logic
+        addStartQuizListener();
     } else if (pathname === '/frontend/question.html') {
 
     }
@@ -158,5 +152,16 @@ function storeLinkIdOnClick() {
             // Store the quiz id in session storage
             storeSelectedQuiz(linkId);
         });
+    });
+}
+
+function addStartQuizListener() {
+    document.getElementById("start-quiz").addEventListener("click", function () {
+        const selectedQuizId = loadSelectedQuizId();
+        getQuestions(selectedQuizId)
+            .then(data => storeQuestions(data))
+            .catch(error => {
+                console.error('Error fetching questions:', error);
+            });
     });
 }
