@@ -3,13 +3,22 @@
 document.addEventListener('DOMContentLoaded', init);
 
 function init() {
-    getQuizzes()
-        .then(data => storeQuizzes(data))   // Store the quizzes response
-        .then(() => displayQuizzes()) // Create quiz tiles
-        .then(() => storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
-        .catch(error => {
-            console.error('Error fetching quizzes:', error);
-        });
+    // Get the current URL or pathname
+    const pathname = window.location.pathname;
+
+    if (pathname === '/frontend/homepage.html') {
+        getQuizzes()
+            .then(data => storeQuizzes(data))   // Store the quizzes response
+            .then(() => displayQuizzes()) // Create quiz tiles
+            .then(() => storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
+            .catch(error => {
+                console.error('Error fetching quizzes:', error);
+            });
+    } else if (pathname === '/frontend/quiz_description.html') {
+
+    } else if (pathname === '/frontend/question.html') {
+
+    }
 }
 
 // Function to get quizzes from the API
@@ -48,7 +57,6 @@ function loadQuizzes() {
 // Function to display the quizzes in the quiz-options element
 function displayQuizzes() {
     const quizzes = loadQuizzes()
-    console.log('Available quizzes: ' + quizzes['quizzes'].length)
     // This is for testing purposes, we should instead use a map
     // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
     const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
