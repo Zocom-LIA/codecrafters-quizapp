@@ -14,7 +14,7 @@ function init() {
             .catch(error => {
                 console.error('Error fetching quizzes:', eror);
             });
-    } else if (pathname === '/frontend/quiz_description.html') {
+    } else if (pathname === '/frontend/description.html') {
         // here will be the quiz description page logic
         addStartQuizListener();
     } else if (pathname === '/frontend/question.html') {
@@ -40,7 +40,6 @@ function getQuestions(quizId) {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-            console.log()
             return response.json();
         });
 }
@@ -106,7 +105,7 @@ function displayQuizzes() {
 
     // Get the parent container element (quiz-options)
     const quizzesContainer = document.getElementById('quizzes-container')
-    const quizDescriptionDestination = 'quiz_description.html';
+    const quizDescriptionDestination = 'description.html';
 
     // Create and append 3 new div elements in a loop
     // This is a temporary limit until we implement pagination/arrows or another approach
