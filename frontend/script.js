@@ -16,6 +16,8 @@ function init() {
             });
     } else if (pathname === '/frontend/description.html') {
         // here will be the quiz description page logic
+        // consider having a check for data stored in session
+        // or moving some funcrtions outside the init function
         displayQuizDescription();
         addStartQuizListener();
     } else if (pathname === '/frontend/question.html') {
@@ -47,7 +49,6 @@ function getQuestions(quizId) {
 
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
-    // sessionStorage.setItem('quizzes', JSON.stringify(quizzes))
     sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']))
 }
 
@@ -162,10 +163,14 @@ function displayQuizDescription() {
 }
 
 function displayQuestion() {
+    var questions = loadQuestions();
     var currentQuestion = 1
-    var numOfQuestions = loadQuestions().length;
+    var numOfQuestions = questions.length;
     const questionNumberHeading = document.getElementById('heading-question-number')
     questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
+
+    const questionText = document.getElementById('heading-question-text')
+    questionText.innerText = questions[0]['questionText'];
 }
 
 // Function to add click event listeners to anchor tags
