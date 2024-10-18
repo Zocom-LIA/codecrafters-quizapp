@@ -159,7 +159,10 @@ function addStartQuizListener() {
     document.getElementById("start-quiz").addEventListener("click", function () {
         const selectedQuizId = loadSelectedQuizId();
         getQuestions(selectedQuizId)
-            .then(data => storeQuestions(data))
+            .then(data => {
+                storeQuestions(data);
+                window.location.href = 'question.html';
+            })
             .catch(error => {
                 console.error('Error fetching questions:', error);
             });
