@@ -16,6 +16,7 @@ function init() {
             });
     } else if (pathname === '/frontend/description.html') {
         // here will be the quiz description page logic
+        displayQuizDescription();
         addStartQuizListener();
     } else if (pathname === '/frontend/question.html') {
         displayQuestion();
@@ -73,6 +74,23 @@ function storeSelectedQuiz(selectedQuizId) {
 
 function loadSelectedQuizId() {
     return sessionStorage.getItem('selectedQuizId');
+}
+
+function loadSelectedQuizDescription() {
+    const selectedQuizId = loadSelectedQuizId();
+    const quizzes = loadQuizzes();
+
+    // TODO: Fix bug of unavailable data.
+    if (!selectedQuizId || !quizzes) {
+        console.log('Data not available yet.');
+        return "Quiz Description";
+    }
+
+    for (let i = 0; i < quizzes.length; i++) {
+        if (quizzes[i]['quizId'] === selectedQuizId)
+            return quizzes[i]['description'];
+    }
+    return null;
 }
 
 function storeQuestions(questions) {
@@ -136,6 +154,11 @@ function displayQuizzes() {
             quizzesContainer.appendChild(quizOption);
         }
     }
+}
+
+function displayQuizDescription() {
+    const quizDescription = loadSelectedQuizDescription();
+    document.getElementById('description-box').textContent = quizDescription;
 }
 
 function displayQuestion() {
