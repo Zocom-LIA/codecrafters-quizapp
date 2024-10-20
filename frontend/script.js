@@ -203,11 +203,20 @@ function addStartQuizListener() {
 
 function displayQuestion() {
     var questions = loadQuestions();
-    var currentQuestion = 1
-    var numOfQuestions = questions.length;
-    const questionNumberHeading = document.getElementById('heading-question-number')
-    questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
 
-    const questionText = document.getElementById('heading-question-text')
-    questionText.innerText = questions[0]['questionText'];
+    if (questions != 0) {
+        var currentQuestion = 1
+        var numOfQuestions = questions.length;
+        const questionNumberHeading = document.getElementById('heading-question-number')
+        questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
+
+        const questionText = document.getElementById('heading-question-text')
+        questionText.innerText = questions[0].questionText;
+
+        for (let i = 0; i < 4; i++) {
+            const buttonId = `btn-option-${i + 1}`
+            const buttonOption = document.getElementById(buttonId);
+            buttonOption.textContent = questions[0].options[i];
+        }
+    }
 }
