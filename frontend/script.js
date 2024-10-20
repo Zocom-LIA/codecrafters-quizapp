@@ -17,7 +17,9 @@ async function init() {
         }
     } else if (pathname.includes('description.html')) {
         displayQuizDescription();
-        //         addStartQuizListener();
+        addStartQuizListener();
+    } else if (pathname.includes('question.html')) {
+        displayQuestion();
     }
 }
 
@@ -32,6 +34,22 @@ async function getQuizzes() {
         return data;
     } catch (error) {
         console.error('Error fetching quizzes:', error);
+        throw error;
+    }
+}
+
+// Function to get questions for a given quiz ID from the API
+async function getQuestions(quizId) {
+    try {
+        const response = await fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log("Questions retrieved")
+        return data;
+    } catch (error) {
+        console.error('Error fetching questions:', error);
         throw error;
     }
 }
@@ -67,21 +85,38 @@ function loadSelectedQuizId() {
     return sessionStorage.getItem('selectedQuizId');
 }
 
+function loadQuestions() {
+    const storedQuestions = sessionStorage.getItem('questions');
+
+    if (storedQuestions) {
+        try {
+            return JSON.parse(storedQuestions);
+        } catch (error) {
+            console.error("Error parsing JSON from sessionStorage", error);
+            return null;
+        }
+    } else {
+        console.warn("No question data found in sessionStorage");
+        return null;
+    }
+}
+
 function loadSelectedQuizDescription() {
     const selectedQuizId = loadSelectedQuizId();
     const quizzes = loadQuizzes();
 
-    // TODO: Fix bug of unavailable data.
     if (!selectedQuizId || !quizzes) {
-        console.log('Data not available yet.');
-        return "Quiz Description";
+        console.log('Data not yet available.');
+        return "Data not yet available.";
     }
 
+    // Consider using built-in find() function
     for (let i = 0; i < quizzes.length; i++) {
         if (quizzes[i]['quizId'] === selectedQuizId)
             return quizzes[i]['description'];
     }
-    return "Not found";
+    console.log('Quiz not found.');
+    return "Quiz not found.";
 }
 
 // Function to display the quizzes in the quiz-options element
@@ -137,4 +172,42 @@ function displayQuizzes(quizzes) {
 function displayQuizDescription() {
     const quizDescription = loadSelectedQuizDescription();
     document.getElementById('description-box').textContent = quizDescription;
+    console.log("Quiz description: " + quizDescription);
+}
+
+function storeQuestions(questions) {
+    sessionStorage.setItem('questions', JSON.stringify(questions['questions']))
+}
+
+function addStartQuizListener() {
+    const selectedQuizId = loadSelectedQuizId();
+    // Select the button element
+    const startQuizButton = document.getElementById('start-quiz');
+    // Add an event listener to the button
+    startQuizButton.addEventListener('click', async () => {
+        try {
+            // Call the async function to fetch questions
+            const questions = await getQuestions(selectedQuizId);
+
+            // Store the fetched questions in sessionStorage
+            storeQuestions(questions);
+            console.log('Questions stored in sessionStorage.');
+
+            // Navigate to the new page after storing the data
+            window.location.href = 'question.html';  // Change to the target page
+        } catch (error) {
+            console.error('Failed to fetch questions:', error);
+        }
+    });
+}
+
+function displayQuestion() {
+    var questions = loadQuestions();
+    var currentQuestion = 1
+    var numOfQuestions = questions.length;
+    const questionNumberHeading = document.getElementById('heading-question-number')
+    questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
+
+    const questionText = document.getElementById('heading-question-text')
+    questionText.innerText = questions[0]['questionText'];
 }
