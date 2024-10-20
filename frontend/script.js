@@ -148,7 +148,7 @@ function displayQuizzes(quizzes) {
 
             var quizTitle = document.createElement('a');
             quizTitle.setAttribute('href', quizDescriptionDestination);
-            quizTitle.dataset.quizId = quizzes[i]['quizId']
+            quizTitle.dataset.quizId = quizzes[i]['quizId'];
             quizTitle.innerText = quizzes[i]['title'];
 
             quizTitle.addEventListener('click', (event) => {
@@ -217,6 +217,25 @@ function displayQuestion() {
             const buttonId = `btn-option-${i + 1}`
             const buttonOption = document.getElementById(buttonId);
             buttonOption.textContent = questions[0].options[i];
+
+            buttonOption.dataset.selected = 'false';
+
+            buttonOption.addEventListener('click', (event) => {
+                // Toggle the value of the 'data-selected' attribute
+                const isSelected = event.target.dataset.selected === 'true'; // Check current value
+                event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
+
+                // TODO: Refactor using a css class (e.g. selected) to increase code readability
+                // e.g. buttonOption.classList.toggle('selected'); // Add/remove the 'selected' class
+                if (event.target.dataset.selected === 'true') {
+                    event.target.style.backgroundColor = '#f0f0f0';
+                    event.target.style.borderColor = 'black';
+                } else {
+                    event.target.style.backgroundColor = 'white';
+                    event.target.style.borderColor = '#a262e3';
+                }
+                console.log(`Button {${event.target.id}} selected: ${event.target.dataset.selected}`); // Log the new value
+            });
         }
     }
 }
