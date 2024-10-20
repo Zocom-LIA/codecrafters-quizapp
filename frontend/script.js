@@ -2,54 +2,44 @@
 // This ensures that the API call and displaying of quizzes happens as soon as possible
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
+async function init() {
     // Get the current URL or pathname
     const pathname = window.location.pathname;
 
-    if (pathname === '/frontend/homepage.html') {
-        getQuizzes()
-            .then(data => storeQuizzes(data))   // Store the quizzes response
-            .then(() => displayQuizzes()) // Create quiz tiles
-            .then(() => storeLinkIdOnClick())   // Add a listener to links in order to extract their ID when clicked
-            .catch(error => {
-                console.error('Error fetching quizzes:', eror);
-            });
-    } else if (pathname === '/frontend/description.html') {
-        // here will be the quiz description page logic
-        // consider having a check for data stored in session
-        // or moving some funcrtions outside the init function
+    if (pathname.includes('homepage.html')) {
+        try {
+            let quizzes;
+            quizzes = await getQuizzes();
+            storeQuizzes(quizzes);
+            displayQuizzes(quizzes['quizzes']);
+        } catch (error) {
+            console.error('Error initializing the app:', error);
+        }
+    } else if (pathname.includes('description.html')) {
         displayQuizDescription();
-        addStartQuizListener();
-    } else if (pathname === '/frontend/question.html') {
-        displayQuestion();
+        //         addStartQuizListener();
     }
 }
 
-// Function to get quizzes from the API
-function getQuizzes() {
-    return fetch('http://localhost:3000/dev/quiz')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json(); // Parse JSON data
-        });
-}
-
-// Function to get questions for a given quiz ID from the API
-function getQuestions(quizId) {
-    return fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        });
+async function getQuizzes() {
+    try {
+        const response = await fetch('http://localhost:3000/dev/quiz');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log("Quizzes retrieved")
+        return data;
+    } catch (error) {
+        console.error('Error fetching quizzes:', error);
+        throw error;
+    }
 }
 
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
     sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']))
+    console.log("Quizzes stored.")
 }
 
 // Retrieve the data from sessionStorage and parse it if it exists
@@ -91,32 +81,13 @@ function loadSelectedQuizDescription() {
         if (quizzes[i]['quizId'] === selectedQuizId)
             return quizzes[i]['description'];
     }
-    return null;
-}
-
-function storeQuestions(questions) {
-    sessionStorage.setItem('questions', JSON.stringify(questions['questions']))
-}
-
-function loadQuestions() {
-    const storedQuestions = sessionStorage.getItem('questions');
-
-    if (storedQuestions) {
-        try {
-            return JSON.parse(storedQuestions);
-        } catch (error) {
-            console.error("Error parsing JSON from sessionStorage", error);
-            return null;
-        }
-    } else {
-        console.warn("No question data found in sessionStorage");
-        return null;
-    }
+    return "Not found";
 }
 
 // Function to display the quizzes in the quiz-options element
-function displayQuizzes() {
-    const quizzes = loadQuizzes()
+function displayQuizzes(quizzes) {
+    // consider loading directly
+    // const quizzes = loadQuizzes()
     // This is for testing purposes, we should instead use a map
     // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
     const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
@@ -142,8 +113,14 @@ function displayQuizzes() {
 
             var quizTitle = document.createElement('a');
             quizTitle.setAttribute('href', quizDescriptionDestination);
-            quizTitle.id = quizzes[i]['quizId']
+            quizTitle.dataset.quizId = quizzes[i]['quizId']
             quizTitle.innerText = quizzes[i]['title'];
+
+            quizTitle.addEventListener('click', (event) => {
+                const selectedQuizId = event.target.dataset.quizId;
+                storeSelectedQuiz(selectedQuizId);
+                console.log("selected quiz: " + selectedQuizId);
+            });
 
             // Add image and anchor elements to their parent element - quiz-options
             quizOption.appendChild(quizImage);
@@ -160,45 +137,4 @@ function displayQuizzes() {
 function displayQuizDescription() {
     const quizDescription = loadSelectedQuizDescription();
     document.getElementById('description-box').textContent = quizDescription;
-}
-
-function displayQuestion() {
-    var questions = loadQuestions();
-    var currentQuestion = 1
-    var numOfQuestions = questions.length;
-    const questionNumberHeading = document.getElementById('heading-question-number')
-    questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
-
-    const questionText = document.getElementById('heading-question-text')
-    questionText.innerText = questions[0]['questionText'];
-}
-
-// Function to add click event listeners to anchor tags
-function storeLinkIdOnClick() {
-    const links = document.querySelectorAll('a');
-
-    // Add click event listener to each anchor tag
-    links.forEach(link => {
-        link.addEventListener('click', function (event) {
-            // Get the ID of the clicked link
-            const linkId = this.id;
-
-            // Store the quiz id in session storage
-            storeSelectedQuiz(linkId);
-        });
-    });
-}
-
-function addStartQuizListener() {
-    document.getElementById("start-quiz").addEventListener("click", function () {
-        const selectedQuizId = loadSelectedQuizId();
-        getQuestions(selectedQuizId)
-            .then(data => {
-                storeQuestions(data);
-                window.location.href = 'question.html';
-            })
-            .catch(error => {
-                console.error('Error fetching questions:', error);
-            });
-    });
 }
