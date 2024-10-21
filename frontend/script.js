@@ -31,7 +31,6 @@ async function getQuizzes() {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log("Quizzes retrieved");
         return data;
     } catch (error) {
         console.error('Error fetching quizzes:', error);
@@ -47,7 +46,6 @@ async function getQuestions(quizId) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log("Questions retrieved");
         return data;
     } catch (error) {
         console.error('Error fetching questions:', error);
@@ -58,7 +56,6 @@ async function getQuestions(quizId) {
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
     sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']));
-    console.log("Quizzes stored.");
 }
 
 // Retrieve the data from sessionStorage and parse it if it exists
@@ -107,7 +104,6 @@ function loadSelectedQuizDescription() {
     const quizzes = loadQuizzes();
 
     if (!selectedQuizId || !quizzes) {
-        console.log('Data not yet available.');
         return "Data not yet available.";
     }
 
@@ -116,7 +112,6 @@ function loadSelectedQuizDescription() {
         if (quizzes[i]['quizId'] === selectedQuizId)
             return quizzes[i]['description'];
     }
-    console.log('Quiz not found.');
     return "Quiz not found.";
 }
 
@@ -155,7 +150,6 @@ function displayQuizzes(quizzes) {
             quizTitle.addEventListener('click', (event) => {
                 const selectedQuizId = event.target.dataset.quizId;
                 storeSelectedQuiz(selectedQuizId);
-                console.log("selected quiz: " + selectedQuizId);
             });
 
             // Add image and anchor elements to their parent element - quiz-options
@@ -173,7 +167,6 @@ function displayQuizzes(quizzes) {
 function displayQuizDescription() {
     const quizDescription = loadSelectedQuizDescription();
     document.getElementById('description-box').textContent = quizDescription;
-    console.log("Quiz description: " + quizDescription);
 }
 
 function storeQuestions(questions) {
@@ -192,42 +185,77 @@ function addStartQuizListener() {
 
             // Store the fetched questions in sessionStorage
             storeQuestions(questions);
-            console.log('Questions stored in sessionStorage.');
+
+            // Set the current question number
+            // This will be used by the functions for question.html page to figure out which question to show
+            sessionStorage.setItem('nextQuestion', 0);
 
             // Navigate to the new page after storing the data
-            window.location.href = 'question.html';  // Change to the target page
+            window.location.href = 'question.html';
         } catch (error) {
             console.error('Failed to fetch questions:', error);
         }
     });
 }
 
+// function runQuiz() {
+//     var questions = loadQuestions();
+
+//     for (const question of questions) {
+//         displayQuestion(question);
+//         evaluateAnswers(question);
+//     }
+// }
+
 function displayQuestion() {
     var questions = loadQuestions();
 
     if (questions != 0) {
-        var currentQuestion = 1
+        // Attributes are always stored in session storage as strings so it's necessary to parse them as numbers before processing them
+        // Otherwise they'll be treated as strings and the results will be concatenated e.g. 1 + 1 will result in 11.
+        var currentQuestion = Number(sessionStorage.getItem('nextQuestion'));
+        sessionStorage.setItem('currentQuestion', currentQuestion);
         var numOfQuestions = questions.length;
+
+        // If it's the last question, we should ensure that we end the question-alswer page loop
+        if (currentQuestion == numOfQuestions - 1) {
+            sessionStorage.setItem('nextQuestion', -1);
+        } else {
+            sessionStorage.setItem('nextQuestion', currentQuestion + 1);
+        }
+
         const questionNumberHeading = document.getElementById('heading-question-number');
-        questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
+        questionNumberHeading.innerText = `${currentQuestion + 1}/${numOfQuestions}`;
 
         const questionText = document.getElementById('heading-question-text');
-        questionText.innerText = questions[0].questionText;
+        questionText.innerText = questions[currentQuestion].questionText;
 
         for (let i = 0; i < 4; i++) {
             const buttonId = `btn-option-${i + 1}`;
             const buttonOption = document.getElementById(buttonId);
-            buttonOption.textContent = questions[0].options[i];
+            buttonOption.textContent = questions[currentQuestion].options[i];
 
             buttonOption.dataset.selected = 'false';
 
-            buttonOption.addEventListener('click', selectOption);
+            // Restore buttons to their initial style. This is important because the same elements are used for all questions of the quiz
+            buttonOption.style.backgroundColor = 'white';
+            buttonOption.style.borderColor = '#a262e3';
+            buttonOption.style.fontWeight = 'normal';
+            buttonOption.style.borderWidth = '2px';
+            buttonOption.style.borderStyle = 'solid';
+
+            // Removing the button listener that was attached in the previous question. This is important as we're running this function multiple times
+            // and we don't want to end up with multiple listeners, all triggering separately.
+            if (currentQuestion != 0) {
+                buttonOption.removeEventListener('click', selectOptionListener);
+            }
+            buttonOption.addEventListener('click', selectOptionListener);
         }
     }
 }
 
 // Function that runs when an option is selected
-function selectOption(event) {
+function selectOptionListener(event) {
     // Toggle the value of the 'data-selected' attribute
     const isSelected = event.target.dataset.selected === 'true'; // Check current value
     event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
@@ -241,38 +269,55 @@ function selectOption(event) {
         event.target.style.backgroundColor = 'white';
         event.target.style.borderColor = '#a262e3';
     }
-    console.log(`Button {${event.target.id}} selected: ${event.target.dataset.selected}`); // Log the new value
 }
 
 function evaluateAnswers() {
-    var questions = loadQuestions();
     const submitButton = document.getElementById('btn-submit');
+    // mode is an HTML data-* attribute that defines the 'Submit' button's behaviour. It has the following states:
+    //  - submit: In this state, the user's answers are submitted and evaluated against the correct answer(s) for the current question. The button's label is 'Submit'.
+    //  - next: In this state, the button is used for navigating to the next question of the quiz. The button label is 'Next' and clicking the button will show the next question of the quiz. The button is in this state when there is 
+    //  - results: In this state, the current question is the last question. The button label is 'Results' and clicking the button will navigate to the results page, ending the question-result loop.
+    submitButton.dataset.mode = 'submit';
 
     submitButton.addEventListener('click', (event) => {
-        for (let i = 0; i < 4; i++) {
-            const optionButton = document.getElementById(`btn-option-${i + 1}`);
-            optionButton.removeEventListener('click', selectOption);
+        var questions = loadQuestions();
+        var currentQuestion = Number(sessionStorage.getItem('currentQuestion'));
 
-            console.log(optionButton.id + optionButton.dataset.selected);
+        if (event.target.dataset.mode === 'submit') {
+            for (let i = 0; i < 4; i++) {
+                const optionButton = document.getElementById(`btn-option-${i + 1}`);
 
-            if (questions[0].correctAnswer.includes(optionButton.textContent)) {
-                if (optionButton.dataset.selected === 'true') {
-                    optionButton.style.backgroundColor = '#91DEC2';
-                    optionButton.style.borderColor = '#91DEC2';
-                    optionButton.style.fontWeight = 'bold';
-                    console.log(optionButton.id + "Correct!");
+                if (questions[currentQuestion].correctAnswer.includes(optionButton.textContent)) {
+                    if (optionButton.dataset.selected === 'true') {
+                        optionButton.style.backgroundColor = '#91DEC2';
+                        optionButton.style.borderColor = '#91DEC2';
+                        optionButton.style.fontWeight = 'bold';
+                    } else {
+                        optionButton.style.backgroundColor = '#f0f0f0';
+                        optionButton.style.borderWidth = '4px'; // Set border width
+                        optionButton.style.borderStyle = 'dashed'; // Set border style (solid, dashed, etc.)
+                        optionButton.style.fontWeight = 'bold';
+                    }
                 } else {
-                    optionButton.style.backgroundColor = '#f0f0f0';
-                    optionButton.style.borderWidth = '4px'; // Set border width
-                    optionButton.style.borderStyle = 'dashed'; // Set border style (solid, dashed, etc.)
-                    optionButton.style.fontWeight = 'bold';
-                }
-            } else {
-                if (optionButton.dataset.selected === 'true') {
-                    optionButton.style.backgroundColor = '#F0C3C3';
-                    optionButton.style.borderColor = '#F0C3C3';
+                    if (optionButton.dataset.selected === 'true') {
+                        optionButton.style.backgroundColor = '#F0C3C3';
+                        optionButton.style.borderColor = '#F0C3C3';
+                    }
                 }
             }
+            if (Number(sessionStorage.getItem('nextQuestion')) != -1) {
+                event.target.textContent = 'Next';
+                event.target.dataset.mode = 'next';
+            } else {
+                event.target.textContent = 'View Results';
+                event.target.dataset.mode = 'results';
+            }
+        } else if (event.target.dataset.mode === 'next') {
+            event.target.textContent = 'Submit';
+            event.target.dataset.mode = 'submit';
+            displayQuestion();
+        } else if (event.target.dataset.mode === 'results') {
+            window.location.href = 'results.html';
         }
     });
 }
