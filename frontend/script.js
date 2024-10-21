@@ -20,6 +20,7 @@ async function init() {
         addStartQuizListener();
     } else if (pathname.includes('question.html')) {
         displayQuestion();
+        evaluateAnswers();
     }
 }
 
@@ -30,7 +31,7 @@ async function getQuizzes() {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log("Quizzes retrieved")
+        console.log("Quizzes retrieved");
         return data;
     } catch (error) {
         console.error('Error fetching quizzes:', error);
@@ -46,7 +47,7 @@ async function getQuestions(quizId) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log("Questions retrieved")
+        console.log("Questions retrieved");
         return data;
     } catch (error) {
         console.error('Error fetching questions:', error);
@@ -56,8 +57,8 @@ async function getQuestions(quizId) {
 
 // Store quizzes to session storage
 function storeQuizzes(quizzes) {
-    sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']))
-    console.log("Quizzes stored.")
+    sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']));
+    console.log("Quizzes stored.");
 }
 
 // Retrieve the data from sessionStorage and parse it if it exists
@@ -129,7 +130,7 @@ function displayQuizzes(quizzes) {
     const imageAltTexts = ["C++", "Python", "Java"];
 
     // Get the parent container element (quiz-options)
-    const quizzesContainer = document.getElementById('quizzes-container')
+    const quizzesContainer = document.getElementById('quizzes-container');
     const quizDescriptionDestination = 'description.html';
 
     // Create and append 3 new div elements in a loop
@@ -176,7 +177,7 @@ function displayQuizDescription() {
 }
 
 function storeQuestions(questions) {
-    sessionStorage.setItem('questions', JSON.stringify(questions['questions']))
+    sessionStorage.setItem('questions', JSON.stringify(questions['questions']));
 }
 
 function addStartQuizListener() {
@@ -207,35 +208,71 @@ function displayQuestion() {
     if (questions != 0) {
         var currentQuestion = 1
         var numOfQuestions = questions.length;
-        const questionNumberHeading = document.getElementById('heading-question-number')
+        const questionNumberHeading = document.getElementById('heading-question-number');
         questionNumberHeading.innerText = `${currentQuestion}/${numOfQuestions}`;
 
-        const questionText = document.getElementById('heading-question-text')
+        const questionText = document.getElementById('heading-question-text');
         questionText.innerText = questions[0].questionText;
 
         for (let i = 0; i < 4; i++) {
-            const buttonId = `btn-option-${i + 1}`
+            const buttonId = `btn-option-${i + 1}`;
             const buttonOption = document.getElementById(buttonId);
             buttonOption.textContent = questions[0].options[i];
 
             buttonOption.dataset.selected = 'false';
 
-            buttonOption.addEventListener('click', (event) => {
-                // Toggle the value of the 'data-selected' attribute
-                const isSelected = event.target.dataset.selected === 'true'; // Check current value
-                event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
-
-                // TODO: Refactor using a css class (e.g. selected) to increase code readability
-                // e.g. buttonOption.classList.toggle('selected'); // Add/remove the 'selected' class
-                if (event.target.dataset.selected === 'true') {
-                    event.target.style.backgroundColor = '#f0f0f0';
-                    event.target.style.borderColor = 'black';
-                } else {
-                    event.target.style.backgroundColor = 'white';
-                    event.target.style.borderColor = '#a262e3';
-                }
-                console.log(`Button {${event.target.id}} selected: ${event.target.dataset.selected}`); // Log the new value
-            });
+            buttonOption.addEventListener('click', selectOption);
         }
     }
+}
+
+// Function that runs when an option is selected
+function selectOption(event) {
+    // Toggle the value of the 'data-selected' attribute
+    const isSelected = event.target.dataset.selected === 'true'; // Check current value
+    event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
+
+    // TODO: Refactor using a css class (e.g. selected) to increase code readability
+    // e.g. buttonOption.classList.toggle('selected'); // Add/remove the 'selected' class
+    if (event.target.dataset.selected === 'true') {
+        event.target.style.backgroundColor = '#f0f0f0';
+        event.target.style.borderColor = 'black';
+    } else {
+        event.target.style.backgroundColor = 'white';
+        event.target.style.borderColor = '#a262e3';
+    }
+    console.log(`Button {${event.target.id}} selected: ${event.target.dataset.selected}`); // Log the new value
+}
+
+function evaluateAnswers() {
+    var questions = loadQuestions();
+    const submitButton = document.getElementById('btn-submit');
+
+    submitButton.addEventListener('click', (event) => {
+        for (let i = 0; i < 4; i++) {
+            const optionButton = document.getElementById(`btn-option-${i + 1}`);
+            optionButton.removeEventListener('click', selectOption);
+
+            console.log(optionButton.id + optionButton.dataset.selected);
+
+            if (questions[0].correctAnswer.includes(optionButton.textContent)) {
+                if (optionButton.dataset.selected === 'true') {
+                    optionButton.style.backgroundColor = '#91DEC2';
+                    optionButton.style.borderColor = '#91DEC2';
+                    optionButton.style.fontWeight = 'bold';
+                    console.log(optionButton.id + "Correct!");
+                } else {
+                    optionButton.style.backgroundColor = '#f0f0f0';
+                    optionButton.style.borderWidth = '4px'; // Set border width
+                    optionButton.style.borderStyle = 'dashed'; // Set border style (solid, dashed, etc.)
+                    optionButton.style.fontWeight = 'bold';
+                }
+            } else {
+                if (optionButton.dataset.selected === 'true') {
+                    optionButton.style.backgroundColor = '#F0C3C3';
+                    optionButton.style.borderColor = '#F0C3C3';
+                }
+            }
+        }
+    });
 }
