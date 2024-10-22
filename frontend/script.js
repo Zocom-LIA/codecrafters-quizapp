@@ -231,6 +231,7 @@ function displayQuestion() {
             buttonOption.dataset.selected = 'false';
 
             // Restore buttons to their initial style. This is important because the same elements are used for all questions of the quiz
+            // TODO: Refactor to take style from csse.g. using buttonOption.classList.add('answer-option');. It's not taking effect in the 2nd question onwards so should consider refactoring the buttons after in the evaluation part of the question page.
             buttonOption.style.backgroundColor = 'white';
             buttonOption.style.borderColor = '#a262e3';
             buttonOption.style.fontWeight = 'normal';
