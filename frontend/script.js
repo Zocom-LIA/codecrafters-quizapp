@@ -6,6 +6,7 @@ async function init() {
     // Get the current URL or pathname
     const pathname = window.location.pathname;
 
+    // In the homepage, the quizzes are retrieved by making an API call, they're stored in session and the quizz links (tiles) are displayed dynamically.
     if (pathname.includes('homepage.html')) {
         try {
             let quizzes;
@@ -17,13 +18,14 @@ async function init() {
         }
     } else if (pathname.includes('description.html')) {
         displayQuizDescription();
-        addStartQuizListener();
+        addStartQuizListener();     // This makes another API call to retireve all questions for the selected quiz
     } else if (pathname.includes('question.html')) {
         displayQuestion();
         evaluateAnswers();
     }
 }
 
+// API call to getAllQuizzes
 async function getQuizzes() {
     try {
         const response = await fetch('http://localhost:3000/dev/quiz');
@@ -38,7 +40,7 @@ async function getQuizzes() {
     }
 }
 
-// Function to get questions for a given quiz ID from the API
+// API call to getQuestionsByQuiz
 async function getQuestions(quizId) {
     try {
         const response = await fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`);
@@ -58,7 +60,7 @@ function storeQuizzes(quizzes) {
     sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']));
 }
 
-// Retrieve the data from sessionStorage and parse it if it exists
+// Retrieve the quizzes from sessionStorage and parse it if it exists
 function loadQuizzes() {
     const storedQuizzes = sessionStorage.getItem('quizzes');
 
@@ -75,6 +77,7 @@ function loadQuizzes() {
     }
 }
 
+// Store the user selected quiz for retrieving it in the description and question pages
 function storeSelectedQuiz(selectedQuizId) {
     sessionStorage.setItem('selectedQuizId', selectedQuizId);
 }
@@ -103,34 +106,29 @@ function loadSelectedQuizDescription() {
     const selectedQuizId = loadSelectedQuizId();
     const quizzes = loadQuizzes();
 
+    // Check for cases where the API hasn't yet returned the data
     if (!selectedQuizId || !quizzes) {
         return "Data not yet available.";
     }
 
-    // Consider using built-in find() function
-    for (let i = 0; i < quizzes.length; i++) {
-        if (quizzes[i]['quizId'] === selectedQuizId)
-            return quizzes[i]['description'];
-    }
-    return "Quiz not found.";
+    const quiz = quizzes.find(quiz => quiz.quizId === selectedQuizId);
+    return quiz ? quiz.description : "Quiz not found.";
 }
 
 // Function to display the quizzes in the quiz-options element
 function displayQuizzes(quizzes) {
-    // consider loading directly
-    // const quizzes = loadQuizzes()
     // This is for testing purposes, we should instead use a map
     // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
     const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
     const imageAltTexts = ["C++", "Python", "Java"];
 
-    // Get the parent container element (quiz-options)
+    // Get the parent container element (quiz-options), which will include all the dynamically created quiz links
     const quizzesContainer = document.getElementById('quizzes-container');
     const quizDescriptionDestination = 'description.html';
 
     // Create and append 3 new div elements in a loop
     // This is a temporary limit until we implement pagination/arrows or another approach
-    // We should then change the for loop to a foreach, to improve code readability
+    // We should then change the for loop to a for...of, to improve code readability
     for (let i = 0; i < quizzes.length; i++) {
         if (i < 3) {
             // Element for the quiz option (tile that includes image and title)
@@ -173,11 +171,10 @@ function storeQuestions(questions) {
     sessionStorage.setItem('questions', JSON.stringify(questions['questions']));
 }
 
+// Logic for moving from the description to the question page. An API call is made to retrieve questions for the quiz id selected by the user, and then the questions are stored in session, before navigating to the question page.
 function addStartQuizListener() {
     const selectedQuizId = loadSelectedQuizId();
-    // Select the button element
     const startQuizButton = document.getElementById('start-quiz');
-    // Add an event listener to the button
     startQuizButton.addEventListener('click', async () => {
         try {
             // Call the async function to fetch questions
@@ -186,9 +183,10 @@ function addStartQuizListener() {
             // Store the fetched questions in sessionStorage
             storeQuestions(questions);
 
-            // Set the current question number
-            // This will be used by the functions for question.html page to figure out which question to show
+            // Set the current question number. This will be used by the functions for question.html page to determine which question to show
             sessionStorage.setItem('nextQuestion', 0);
+
+            sessionStorage.setItem('score', 0);
 
             // Navigate to the new page after storing the data
             window.location.href = 'question.html';
@@ -198,15 +196,7 @@ function addStartQuizListener() {
     });
 }
 
-// function runQuiz() {
-//     var questions = loadQuestions();
-
-//     for (const question of questions) {
-//         displayQuestion(question);
-//         evaluateAnswers(question);
-//     }
-// }
-
+// The 1st part of the question page includes adding question text, number, as well as linking the possible options to the page's buttons.
 function displayQuestion() {
     var questions = loadQuestions();
 
@@ -217,19 +207,22 @@ function displayQuestion() {
         sessionStorage.setItem('currentQuestion', currentQuestion);
         var numOfQuestions = questions.length;
 
-        // If it's the last question, we should ensure that we end the question-alswer page loop
+        // If it's the last question, we should ensure that we end the question-answer page loop
         if (currentQuestion == numOfQuestions - 1) {
             sessionStorage.setItem('nextQuestion', -1);
         } else {
             sessionStorage.setItem('nextQuestion', currentQuestion + 1);
         }
 
+        // Add the question numbering on top of the page (e.g. 1/4)
         const questionNumberHeading = document.getElementById('heading-question-number');
         questionNumberHeading.innerText = `${currentQuestion + 1}/${numOfQuestions}`;
 
+        // Add the question text to the page
         const questionText = document.getElementById('heading-question-text');
         questionText.innerText = questions[currentQuestion].questionText;
 
+        // For every button-choice, the style is reset and a click listener is attached
         for (let i = 0; i < 4; i++) {
             const buttonId = `btn-option-${i + 1}`;
             const buttonOption = document.getElementById(buttonId);
@@ -254,9 +247,9 @@ function displayQuestion() {
     }
 }
 
-// Function that runs when an option is selected
+// Function that runs when an option is selected. The user choice is saved and the button changes style to reflect the change.
 function selectOptionListener(event) {
-    // Toggle the value of the 'data-selected' attribute
+    // Toggle the value of the 'data-selected' attribute. This acts as a flag to determine if the specific button is clicked (the user selected this as a possible answer).
     const isSelected = event.target.dataset.selected === 'true'; // Check current value
     event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
 
@@ -271,27 +264,32 @@ function selectOptionListener(event) {
     }
 }
 
+// The 2nd part of the question page includes evaluating user choices against the correct answers and changing button styles to reflect the result.
 function evaluateAnswers() {
     const submitButton = document.getElementById('btn-submit');
-    // mode is an HTML data-* attribute that defines the 'Submit' button's behaviour. It has the following states:
-    //  - submit: In this state, the user's answers are submitted and evaluated against the correct answer(s) for the current question. The button's label is 'Submit'.
-    //  - next: In this state, the button is used for navigating to the next question of the quiz. The button label is 'Next' and clicking the button will show the next question of the quiz. The button is in this state when there is 
-    //  - results: In this state, the current question is the last question. The button label is 'Results' and clicking the button will navigate to the results page, ending the question-result loop.
-    submitButton.dataset.mode = 'submit';
+    // mode is an HTML data-* attribute created to define the 'Submit' button's behaviour. It has the following states:
+    //  - question: This is the state when a new question is presented to the user. When the button is pressed in this state, the next state is 'answer', where the user's answers are submitted and evaluated against the correct answer(s) for the current question. The button's label in this mode is 'Submit'.
+    //  - answer: This is the state where the correct answers are shown. The button is used for navigating to the next question of the quiz. The button label is 'Next' and clicking the button will show the next question of the quiz.
+    //  - results: In this state, the current question is the last question. Clicking the button will navigate to the results page, ending the question-result loop. The button label is 'Results'.
+    submitButton.dataset.mode = 'question';
 
     submitButton.addEventListener('click', (event) => {
         var questions = loadQuestions();
         var currentQuestion = Number(sessionStorage.getItem('currentQuestion'));
 
-        if (event.target.dataset.mode === 'submit') {
+        if (event.target.dataset.mode === 'question') {
             for (let i = 0; i < 4; i++) {
                 const optionButton = document.getElementById(`btn-option-${i + 1}`);
+                // Make option buttons non clickable when the results are showing, as the answer can't be changed.
+                // Another choice (to removing the listener) would be to disable the button, but this would also change its style, according to the browser specifications, and changing it would require more code and wouldn't be a good practice.
+                optionButton.removeEventListener('click', selectOptionListener);
 
                 if (questions[currentQuestion].correctAnswer.includes(optionButton.textContent)) {
                     if (optionButton.dataset.selected === 'true') {
                         optionButton.style.backgroundColor = '#91DEC2';
                         optionButton.style.borderColor = '#91DEC2';
                         optionButton.style.fontWeight = 'bold';
+                        sessionStorage.setItem('score', Number(sessionStorage.getItem('score')) + 100); // Increase user score for finding the correct answer.
                     } else {
                         optionButton.style.backgroundColor = '#f0f0f0';
                         optionButton.style.borderWidth = '4px'; // Set border width
@@ -307,14 +305,14 @@ function evaluateAnswers() {
             }
             if (Number(sessionStorage.getItem('nextQuestion')) != -1) {
                 event.target.textContent = 'Next';
-                event.target.dataset.mode = 'next';
+                event.target.dataset.mode = 'answer';
             } else {
                 event.target.textContent = 'View Results';
                 event.target.dataset.mode = 'results';
             }
-        } else if (event.target.dataset.mode === 'next') {
+        } else if (event.target.dataset.mode === 'answer') {
             event.target.textContent = 'Submit';
-            event.target.dataset.mode = 'submit';
+            event.target.dataset.mode = 'question';
             displayQuestion();
         } else if (event.target.dataset.mode === 'results') {
             window.location.href = 'results.html';
