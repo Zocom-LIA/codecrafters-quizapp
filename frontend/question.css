@@ -35,9 +35,11 @@ body {
 /* Center the question number at the top */
 .question-number {
     position: absolute;
-    top: 10px; /* Place the question number closer to the top */
+    top: 10px;
+    /* Place the question number closer to the top */
     left: 50%;
-    transform: translateX(-50%); /* Center it horizontally */
+    transform: translateX(-50%);
+    /* Center it horizontally */
 }
 
 .question-number h3 {
@@ -110,10 +112,17 @@ body {
     background-color: #f0f0f0;
 }
 
+/* Selected state */
+/* .selected {
+    background-color: #f0f0f0;
+    border-color: black;
+} */
+
 /* Move submit button closer to the footer */
 .submit-button {
     margin-top: 20px;
-    margin-bottom: 10px; /* Reduced bottom margin to bring it closer to the footer */
+    margin-bottom: 10px;
+    /* Reduced bottom margin to bring it closer to the footer */
     padding: 15px 30px;
     background-color: #a262e3;
     color: white;
