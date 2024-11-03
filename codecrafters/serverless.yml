@@ -67,13 +67,6 @@ functions:
           path: quiz/{quizId}
           method: delete
 
-  seedDataQuestions:
-    handler: handler.seed_data_questions
-    events:
-      - http:
-          path: seed-questions
-          method: post
-
   # Question CRUD
   createQuestion:
     handler: handler.create_question
@@ -101,7 +94,7 @@ functions:
     events:
       - http:
           path: quiz/{quizId}/question/{questionId}
-          method: delete                                
+          method: delete
 
 resources:
   Resources:
