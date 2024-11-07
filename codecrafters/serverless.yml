@@ -25,43 +25,82 @@ plugins:
 
 functions:
   seedData:
-    handler: handler.seed_data
+    handler: seed.seed_data
     events:
       - http:
           path: seed
           method: post
 
+
+    # User CRUD
+
+  # User CRUD
+  createUser:
+    handler: user.create_user
+    events:
+      - http:
+          path: user
+          method: post
+
+  getUserById:
+    handler: user.get_user_by_id
+    events:
+      - http:
+          path: user/{userId}
+          method: get
+
+  getAllUsers:
+    handler: user.get_all_users
+    events:
+      - http:
+          path: user
+          method: get
+
+  updateUser:
+    handler: user.update_user
+    events:
+      - http:
+          path: user/{userId}
+          method: put
+
+  deleteUser:
+    handler: user.delete_user
+    events:
+      - http:
+          path: user/{userId}
+          method: delete
+
   # Quiz CRUD
   createQuiz:
-    handler: handler.create_quiz
+    handler: quiz.create_quiz
     events:
       - http:
           path: quiz
           method: post
 
   getQuizById:
-    handler: handler.get_quiz_by_id
+    handler: quiz.get_quiz_by_id
     events:
       - http:
           path: quiz/{quizId}
           method: get
 
   getAllQuizzes:
-    handler: handler.get_all_quizzes
+    handler: quiz.get_all_quizzes
     events:
       - http:
           path: quiz
           method: get
 
   updateQuiz:
-    handler: handler.update_quiz
+    handler: quiz.update_quiz
     events:
       - http:
           path: quiz/{quizId}
           method: put
 
   deleteQuiz:
-    handler: handler.delete_quiz
+    handler: quiz.delete_quiz
     events:
       - http:
           path: quiz/{quizId}
@@ -69,28 +108,28 @@ functions:
 
   # Question CRUD
   createQuestion:
-    handler: handler.create_question
+    handler: question.create_question
     events:
       - http:
           path: quiz/{quizId}/question
           method: post
 
   getQuestionsByQuiz:
-    handler: handler.get_questions_by_quiz
+    handler: question.get_questions_by_quiz
     events:
       - http:
           path: quiz/{quizId}/questions
           method: get
 
   updateQuestion:
-    handler: handler.update_question
+    handler: question.update_question
     events:
       - http:
           path: quiz/{quizId}/question/{questionId}
           method: put
 
   deleteQuestion:
-    handler: handler.delete_question
+    handler: question.delete_question
     events:
       - http:
           path: quiz/{quizId}/question/{questionId}
