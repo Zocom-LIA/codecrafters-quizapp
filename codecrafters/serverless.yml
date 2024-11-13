@@ -8,6 +8,7 @@ provider:
   name: aws
   runtime: python3.12
   region: eu-north-1
+  stage: dev
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -22,6 +23,13 @@ provider:
 plugins:
   # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
   - serverless-offline
+  - serverless-s3-sync
+
+custom:
+  s3Sync:
+    - bucketName: ${self:service}-${opt:stage, self:provider.stage}-website # e.g. codecrafters-dev-website
+      localDir: ../frontend # Your local static files directory (e.g., public or dist)
+      bucketPrefix: '' # Leave blank to sync at the root of the bucket
 
 functions:
   seedData:
@@ -129,3 +137,32 @@ resources:
         # Table-level Encryption (Optional)
         SSESpecification:
           SSEEnabled: true
+
+    WebsiteBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${opt:stage, self:provider.stage}-website
+        WebsiteConfiguration:
+          IndexDocument: homepage.html
+          ErrorDocument: error.html
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: WebsiteBucket
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:service}-${opt:stage, self:provider.stage}-website/*'
+
+  Outputs:
+    WebsiteURL:
+      Value:
+        Fn::GetAtt: [WebsiteBucket, WebsiteURL]
+      Description: URL of the static website
