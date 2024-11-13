@@ -2,7 +2,6 @@
 app: quizapp
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: codecrafters
-
 provider:
   # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
   name: aws
@@ -19,7 +18,6 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: 'arn:aws:dynamodb:eu-north-1:*:table/*'
-
 plugins:
   # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
   - serverless-offline
@@ -31,86 +29,115 @@ custom:
       localDir: ../frontend # Your local static files directory (e.g., public or dist)
       bucketPrefix: '' # Leave blank to sync at the root of the bucket
 
+
 functions:
   seedData:
-    handler: handler.seed_data
+    handler: seed.seed_data
     events:
       - http:
           path: seed
           method: post
 
+  # User CRUD
+  createUser:
+    handler: user.create_user
+    events:
+      - http:
+          path: user
+          method: post
+
+  getUserById:
+    handler: user.get_user_by_id
+    events:
+      - http:
+          path: user/{userId}
+          method: get
+
+  getAllUsers:
+    handler: user.get_all_users
+    events:
+      - http:
+          path: user
+          method: get
+
+  updateUser:
+    handler: user.update_user
+    events:
+      - http:
+          path: user/{userId}
+          method: put
+
+  deleteUser:
+    handler: user.delete_user
+    events:
+      - http:
+          path: user/{userId}
+          method: delete
+
   # Quiz CRUD
   createQuiz:
-    handler: handler.create_quiz
+    handler: quiz.create_quiz
     events:
       - http:
           path: quiz
           method: post
 
   getQuizById:
-    handler: handler.get_quiz_by_id
+    handler: quiz.get_quiz_by_id
     events:
       - http:
           path: quiz/{quizId}
           method: get
 
   getAllQuizzes:
-    handler: handler.get_all_quizzes
+    handler: quiz.get_all_quizzes
     events:
       - http:
           path: quiz
           method: get
 
   updateQuiz:
-    handler: handler.update_quiz
+    handler: quiz.update_quiz
     events:
       - http:
           path: quiz/{quizId}
           method: put
 
   deleteQuiz:
-    handler: handler.delete_quiz
+    handler: quiz.delete_quiz
     events:
       - http:
           path: quiz/{quizId}
           method: delete
 
-  seedDataQuestions:
-    handler: handler.seed_data_questions
-    events:
-      - http:
-          path: seed-questions
-          method: post
-
   # Question CRUD
   createQuestion:
-    handler: handler.create_question
+    handler: question.create_question
     events:
       - http:
           path: quiz/{quizId}/question
           method: post
 
   getQuestionsByQuiz:
-    handler: handler.get_questions_by_quiz
+    handler: question.get_questions_by_quiz
     events:
       - http:
           path: quiz/{quizId}/questions
           method: get
 
   updateQuestion:
-    handler: handler.update_question
+    handler: question.update_question
     events:
       - http:
           path: quiz/{quizId}/question/{questionId}
           method: put
 
   deleteQuestion:
-    handler: handler.delete_question
+    handler: question.delete_question
     events:
       - http:
           path: quiz/{quizId}/question/{questionId}
-          method: delete                                
-
+          method: delete
 resources:
   Resources:
     QuizTable:
@@ -161,8 +188,9 @@ resources:
               Action: 's3:GetObject'
               Resource: 'arn:aws:s3:::${self:service}-${opt:stage, self:provider.stage}-website/*'
 
+
   Outputs:
-    WebsiteURL:
-      Value:
-        Fn::GetAtt: [WebsiteBucket, WebsiteURL]
-      Description: URL of the static website
+      WebsiteURL:
+        Value:
+          Fn::GetAtt: [WebsiteBucket, WebsiteURL]
+        Description: URL of the static website
