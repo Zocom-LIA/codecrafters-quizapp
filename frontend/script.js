@@ -2,6 +2,16 @@
 // This ensures that the API call and displaying of quizzes happens as soon as possible
 document.addEventListener('DOMContentLoaded', init);
 
+let baseUrl, stage;
+
+if (window.location.hostname === '127.0.0.1') {
+    baseUrl = 'http://localhost:3000'; // Local base URL
+    stage = 'local';
+} else if (window.location.hostname.includes('dev')) {
+    baseUrl = 'https://lx31hr5mn2.execute-api.eu-north-1.amazonaws.com'; // Development base URL
+    stage = 'dev';
+}
+
 async function init() {
     // Get the current URL or pathname
     const pathname = window.location.pathname;
@@ -28,7 +38,7 @@ async function init() {
 // API call to getAllQuizzes
 async function getQuizzes() {
     try {
-        const response = await fetch('http://localhost:3000/dev/quiz');
+        const response = await fetch(`${baseUrl}/${stage}/quiz`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -43,7 +53,7 @@ async function getQuizzes() {
 // API call to getQuestionsByQuiz
 async function getQuestions(quizId) {
     try {
-        const response = await fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`);
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/questions`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }

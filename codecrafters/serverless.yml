@@ -7,7 +7,7 @@ provider:
   name: aws
   runtime: python3.12
   region: eu-north-1
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -19,15 +19,21 @@ provider:
         - dynamodb:DeleteItem
       Resource: 'arn:aws:dynamodb:eu-north-1:*:table/*'
 plugins:
-  # To install this serverless plugin install -n serverless-offline, and then you can run locally using serverless offline (you need to install serverless@3)
   - serverless-offline
   - serverless-s3-sync
 
+# Use a separate environment for offline (local) vs. dev
+environment:
+  BASE_URL: ${self:custom.baseUrls.${self:provider.stage}}
+
 custom:
+  baseUrls:
+    local: http://localhost:3000  # for serverless-offline
+    dev: https://lx31hr5mn2.execute-api.eu-north-1.amazonaws.com  # dev base URL
   s3Sync:
     - bucketName: ${self:service}-${opt:stage, self:provider.stage}-website # e.g. codecrafters-dev-website
-      localDir: ../frontend # Your local static files directory (e.g., public or dist)
-      bucketPrefix: '' # Leave blank to sync at the root of the bucket
+      localDir: ../frontend # Our local static files directory (e.g., public or dist)
+      bucketPrefix: '' # We leave blank to sync at the root of the bucket
 
 
 functions:
