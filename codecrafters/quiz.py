@@ -44,11 +44,11 @@ def create_quiz(event, context):
 def get_quiz_by_id(event, context):
     quiz_id = event['pathParameters']['quizId']
 
+    # Fetch quiz metadata
     response = table.query(
         KeyConditionExpression=Key('PK').eq(
             f"QUIZ#{quiz_id}") & Key('SK').eq("METADATA")
     )
-
     items = response.get('Items', [])
 
     if not items:
@@ -66,12 +66,20 @@ def get_quiz_by_id(event, context):
             'body': json.dumps({'message': 'Quiz metadata not found'})
         }
 
+    # Fetch question count
+    question_response = table.query(
+        KeyConditionExpression=Key('PK').eq(
+            f"QUIZ#{quiz_id}") & Key('SK').begins_with("QUESTION#")
+    )
+    question_count = len(question_response.get('Items', []))
+
     return {
         'statusCode': 200,
         'body': json.dumps({
             'quizId': quiz_id,
             'title': quiz_metadata['title'],
             'description': quiz_metadata['description'],
+            'questionCount': question_count
         })
     }
 
@@ -169,24 +177,16 @@ def delete_quiz(event, context):
             'body': json.dumps({'message': 'Quiz not found'})
         }
 
-    quiz_metadata = next(
-        (item for item in items if item['SK'] == 'METADATA'), None)
-
-    if not quiz_metadata:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'message': 'Quiz metadata not found'})
-        }
-
-    # Delete the quiz
-    table.delete_item(
-        Key={
-            'PK': f"QUIZ#{quiz_id}",
-            'SK': 'METADATA'
-        }
-    )
+    # Delete all associated questions
+    for item in items:
+        table.delete_item(
+            Key={
+                'PK': item['PK'],
+                'SK': item['SK']
+            }
+        )
 
     return {
         'statusCode': 204,
-        'body': json.dumps({'message': 'Quiz deleted successfully'})
+        'body': json.dumps({'message': 'Quiz and associated questions deleted successfully'})
     }

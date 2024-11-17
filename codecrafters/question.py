@@ -49,10 +49,10 @@ def get_questions_by_quiz(event, context):
         {
             'questionId': item['SK'].split('#')[1],
             'questionText': item['questionText'],
-            'options': item['options'],
-            'correctAnswer': item['correctAnswer']
+            'options': item['options']
         }
-        for item in items]
+        for item in items
+    ]
 
     return {
         'statusCode': 200,
