@@ -115,6 +115,20 @@ functions:
           path: useranswers/{userId}/{quizId}/{attemptId}
           method: get
 
+  getCurrentQuestion:
+    handler: handler.get_current_question
+    events:
+      - http:
+          path: quiz/progress/{userId}/{quizId}/{attemptId}
+          method: get
+
+  moveToNextQuestion:
+    handler: handler.move_to_next_question
+    events:
+      - http:
+          path: quiz/progress/{userId}/{quizId}/{attemptId}/next
+          method: post
+
   # Quiz CRUD
   createQuiz:
     handler: quiz.create_quiz

@@ -399,3 +399,126 @@ def get_user_answers(event, context):
         'statusCode': 200,
         'body': json.dumps({'answers': answers})
     }
+
+
+def get_current_question(event, context):
+    data = event['pathParameters']
+    user_id = data['userId']
+    quiz_id = data['quizId']
+    attempt_id = data['attemptId']
+
+    # Fetch the user attempt
+    response = table.get_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        }
+    )
+    attempt = response.get('Item')
+
+    if not attempt:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'User attempt not found'})
+        }
+
+    current_question_id = attempt['currentQuestionId']
+
+    # Fetch the current question
+    question_response = table.get_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': f"QUESTION#{current_question_id}"
+        }
+    )
+    question = question_response.get('Item')
+
+    if not question:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Current question not found'})
+        }
+
+    # Exclude sensitive information
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'questionId': question['SK'].split('#')[1],
+            'questionText': question['questionText'],
+            'options': question['options']
+        })
+    }
+
+
+def move_to_next_question(event, context):
+    data = event['pathParameters']
+    user_id = data['userId']
+    quiz_id = data['quizId']
+    attempt_id = data['attemptId']
+
+    # Fetch the user attempt
+    response = table.get_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        }
+    )
+    attempt = response.get('Item')
+
+    if not attempt:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'User attempt not found'})
+        }
+
+    question_order = attempt.get('questionOrder', [])
+    progress = attempt.get('progress', 0)
+
+    # Check if there are more questions
+    if progress + 1 >= len(question_order):
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'No more questions'})
+        }
+
+    # Determine the next question
+    next_question_id = question_order[progress + 1]
+    new_progress = progress + 1
+
+    # Update the UserAttempt with the new question and progress
+    table.update_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        },
+        UpdateExpression="SET currentQuestionId = :currentQuestionId, progress = :progress",
+        ExpressionAttributeValues={
+            ':currentQuestionId': next_question_id,
+            ':progress': new_progress
+        }
+    )
+
+    # Fetch the details of the next question
+    question_response = table.get_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': f"QUESTION#{next_question_id}"
+        }
+    )
+    next_question = question_response.get('Item')
+
+    if not next_question:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Next question not found'})
+        }
+
+    # Return the next question details (excluding sensitive information like the correct answer)
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'questionId': next_question['SK'].split('#')[1],
+            'questionText': next_question['questionText'],
+            'options': next_question['options']
+        })
+    }
