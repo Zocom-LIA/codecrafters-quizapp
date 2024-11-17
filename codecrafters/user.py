@@ -211,20 +211,44 @@ def create_user_attempt(event, context):
     data = json.loads(event['body'])
 
     user_attempt_id = str(uuid.uuid4())
+    quiz_id = data['quizId']
 
+    # Fetch all questions for the quiz
+    response = table.query(
+        KeyConditionExpression=Key('PK').eq(
+            f"QUIZ#{quiz_id}") & Key('SK').begins_with("QUESTION#")
+    )
+    items = response.get('Items', [])
+
+    if not items:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'No questions found for the quiz'})
+        }
+
+    # Generate question order
+    question_order = [item['SK'].split('#')[1] for item in items]
+    question_order.sort()  # Replace with random.shuffle(question_order) for random order
+
+    # Create UserAttempt with question order
     table.put_item(
         Item={
-            'PK': f"USER#{data['userId']}#QUIZ#{data['quizId']}",
+            'PK': f"USER#{data['userId']}#QUIZ#{quiz_id}",
             'SK': f"ATTEMPT#{user_attempt_id}",
-            "score": "0",
-            "dateStarted": f"{str(datetime.now())}",
-            "dateFinished": "null"
+            "score": 0,
+            "dateStarted": str(datetime.now()),
+            "dateFinished": None,
+            "questionOrder": question_order,
+            "currentQuestionId": question_order[0],
+            "progress": 0
         }
     )
 
     return {
         'statusCode': 201,
-        'body': json.dumps({'message': 'User attempt created successfully', 'userAttemptId': user_attempt_id})
+        'body': json.dumps({
+            'message': 'User attempt created successfully',
+            'userAttemptId': user_attempt_id})
     }
 
 
@@ -234,6 +258,7 @@ def get_user_attempt(event, context):
     quiz_id = data['quizId']
     attempt_id = data['attemptId']
 
+    # Fetch the user attempt
     response = table.get_item(
         Key={
             'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
@@ -249,6 +274,7 @@ def get_user_attempt(event, context):
             'body': json.dumps({'message': 'User attempt not found'})
         }
 
+    # Return all fields, including state-tracking attributes
     return {
         'statusCode': 200,
         'body': json.dumps({
@@ -257,7 +283,10 @@ def get_user_attempt(event, context):
             'attemptId': attempt_id,
             'score': attempt['score'],
             'dateStarted': attempt['dateStarted'],
-            'dateFinished': attempt.get('dateFinished', None)
+            'dateFinished': attempt.get('dateFinished'),
+            'questionOrder': attempt['questionOrder'],
+            'currentQuestionId': attempt['currentQuestionId'],
+            'progress': attempt['progress']
         })
     }
 
@@ -268,6 +297,7 @@ def update_user_attempt(event, context):
     quiz_id = event['pathParameters']['quizId']
     attempt_id = event['pathParameters']['attemptId']
 
+    # Prepare update expressions
     update_expression = []
     expression_attribute_values = {}
     expression_attribute_names = {}
@@ -282,12 +312,28 @@ def update_user_attempt(event, context):
         expression_attribute_values[':dateFinished'] = data['dateFinished']
         expression_attribute_names['#dateFinished'] = 'dateFinished'
 
+    if 'currentQuestionId' in data:
+        update_expression.append('#currentQuestionId = :currentQuestionId')
+        expression_attribute_values[':currentQuestionId'] = data['currentQuestionId']
+        expression_attribute_names['#currentQuestionId'] = 'currentQuestionId'
+
+    if 'progress' in data:
+        update_expression.append('#progress = :progress')
+        expression_attribute_values[':progress'] = data['progress']
+        expression_attribute_names['#progress'] = 'progress'
+
+    if 'questionOrder' in data:
+        update_expression.append('#questionOrder = :questionOrder')
+        expression_attribute_values[':questionOrder'] = data['questionOrder']
+        expression_attribute_names['#questionOrder'] = 'questionOrder'
+
     if not update_expression:
         return {
             'statusCode': 400,
             'body': json.dumps({'message': 'No valid attributes to update'})
         }
 
+    # Perform the update
     table.update_item(
         Key={
             'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
