@@ -352,14 +352,54 @@ def update_user_attempt(event, context):
 
 def create_user_answer(event, context):
     data = json.loads(event['body'])
-
     user_id = data['userId']
     quiz_id = data['quizId']
     attempt_id = data['attemptId']
     question_id = data['questionId']
     user_answer = data['userAnswer']
-    status = data['status']
 
+    # Fetch the user attempt to validate state
+    response = table.get_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        }
+    )
+    attempt = response.get('Item')
+
+    if not attempt:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'User attempt not found'})
+        }
+
+    # Ensure the answer corresponds to the current question
+    if question_id != attempt['currentQuestionId']:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Answer is for an invalid question'})
+        }
+
+    # Fetch the correct answer for the question
+    question_response = table.get_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': f"QUESTION#{question_id}"
+        }
+    )
+    question = question_response.get('Item')
+
+    if not question:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Question not found'})
+        }
+
+    # Check if the user's answer is correct
+    correct_answer = question['correctAnswer']
+    status = 'pass' if user_answer == correct_answer else 'fail'
+
+    # Store the answer in the database
     table.put_item(
         Item={
             'PK': f"USER#{user_id}#QUIZ#{quiz_id}#ATTEMPT#{attempt_id}",
@@ -371,7 +411,7 @@ def create_user_answer(event, context):
 
     return {
         'statusCode': 201,
-        'body': json.dumps({'message': 'User answer created successfully'})
+        'body': json.dumps({'message': 'User answer created successfully', 'status': status})
     }
 
 
@@ -381,6 +421,7 @@ def get_user_answers(event, context):
     quiz_id = data['quizId']
     attempt_id = data['attemptId']
 
+    # Query all answers for the UserAttempt
     response = table.query(
         KeyConditionExpression=Key('PK').eq(
             f"USER#{user_id}#QUIZ#{quiz_id}#ATTEMPT#{attempt_id}"
@@ -388,12 +429,14 @@ def get_user_answers(event, context):
     )
 
     items = response.get('Items', [])
-
-    answers = [{
-        'questionId': item['SK'].split('#')[1],
-        'userAnswer': item['userAnswer'],
-        'status': item['status']
-    } for item in items]
+    answers = [
+        {
+            'questionId': item['SK'].split('#')[1],
+            'userAnswer': item['userAnswer'],
+            'status': item['status']
+        }
+        for item in items
+    ]
 
     return {
         'statusCode': 200,
