@@ -81,53 +81,53 @@ functions:
           method: delete
 
   createUserAttempt:
-    handler: user.create_user_attempt
+    handler: attempt.create_user_attempt
     events:
       - http:
           path: attempts
           method: post
 
   getUserAttempt:
-    handler: user.get_user_attempt
+    handler: attempt.get_user_attempt
     events:
       - http:
           path: attempts/{userId}/{quizId}/{attemptId}
           method: get
 
   updateUserAttempt:
-    handler: user.update_user_attempt
+    handler: attempt.update_user_attempt
     events:
       - http:
           path: attempts/{userId}/{quizId}/{attemptId}
           method: put
   
-  createUserAnswer:
-    handler: user.create_user_answer
-    events:
-      - http:
-          path: answers
-          method: post
-
-  getUserAnswers:
-    handler: user.get_user_answers
-    events:
-      - http:
-          path: answers/{userId}/{quizId}/{attemptId}
-          method: get
-
   getCurrentQuestion:
-    handler: handler.get_current_question
+    handler: attempt.get_current_question
     events:
       - http:
           path: quiz/progress/{userId}/{quizId}/{attemptId}
           method: get
 
   moveToNextQuestion:
-    handler: handler.move_to_next_question
+    handler: attempt.move_to_next_question
     events:
       - http:
           path: quiz/progress/{userId}/{quizId}/{attemptId}/next
           method: post
+
+  createUserAnswer:
+    handler: answer.create_user_answer
+    events:
+      - http:
+          path: answers
+          method: post
+
+  getUserAnswers:
+    handler: answer.get_user_answers
+    events:
+      - http:
+          path: answers/{userId}/{quizId}/{attemptId}
+          method: get
 
   # Quiz CRUD
   createQuiz:
