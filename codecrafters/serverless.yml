@@ -80,6 +80,27 @@ functions:
           path: user/{userId}
           method: delete
 
+  createUserAttempt:
+    handler: user.create_user_attempt
+    events:
+      - http:
+          path: uattempts
+          method: post
+
+  getUserAttempt:
+    handler: user.get_user_attempt
+    events:
+      - http:
+          path: uattempts/{userId}/{quizId}/{attemptId}
+          method: get
+
+  updateUserAttempt:
+    handler: user.update_user_attempt
+    events:
+      - http:
+          path: uattempts/{userId}/{quizId}/{attemptId}
+          method: put
+
   # Quiz CRUD
   createQuiz:
     handler: quiz.create_quiz

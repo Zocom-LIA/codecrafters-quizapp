@@ -205,3 +205,100 @@ def delete_user(event, context):
         'statusCode': 204,
         'body': json.dumps({'message': 'User deleted successfully'})
     }
+
+
+def create_user_attempt(event, context):
+    data = json.loads(event['body'])
+
+    user_attempt_id = str(uuid.uuid4())
+
+    table.put_item(
+        Item={
+            'PK': f"USER#{data['userId']}#QUIZ#{data['quizId']}",
+            'SK': f"ATTEMPT#{user_attempt_id}",
+            "score": "0",
+            "dateStarted": f"{str(datetime.now())}",
+            "dateFinished": "null"
+        }
+    )
+
+    return {
+        'statusCode': 201,
+        'body': json.dumps({'message': 'User attempt created successfully', 'userAttemptId': user_attempt_id})
+    }
+
+
+def get_user_attempt(event, context):
+    data = event['pathParameters']
+    user_id = data['userId']
+    quiz_id = data['quizId']
+    attempt_id = data['attemptId']
+
+    response = table.get_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        }
+    )
+
+    attempt = response.get('Item')
+
+    if not attempt:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'User attempt not found'})
+        }
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'userId': user_id,
+            'quizId': quiz_id,
+            'attemptId': attempt_id,
+            'score': attempt['score'],
+            'dateStarted': attempt['dateStarted'],
+            'dateFinished': attempt.get('dateFinished', None)
+        })
+    }
+
+
+def update_user_attempt(event, context):
+    data = json.loads(event['body'])
+    user_id = event['pathParameters']['userId']
+    quiz_id = event['pathParameters']['quizId']
+    attempt_id = event['pathParameters']['attemptId']
+
+    update_expression = []
+    expression_attribute_values = {}
+    expression_attribute_names = {}
+
+    if 'score' in data:
+        update_expression.append('#score = :score')
+        expression_attribute_values[':score'] = data['score']
+        expression_attribute_names['#score'] = 'score'
+
+    if 'dateFinished' in data:
+        update_expression.append('#dateFinished = :dateFinished')
+        expression_attribute_values[':dateFinished'] = data['dateFinished']
+        expression_attribute_names['#dateFinished'] = 'dateFinished'
+
+    if not update_expression:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'No valid attributes to update'})
+        }
+
+    table.update_item(
+        Key={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+            'SK': f"ATTEMPT#{attempt_id}"
+        },
+        UpdateExpression=f"SET {', '.join(update_expression)}",
+        ExpressionAttributeValues=expression_attribute_values,
+        ExpressionAttributeNames=expression_attribute_names
+    )
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'message': 'User attempt updated successfully'})
+    }
