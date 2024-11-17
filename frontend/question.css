@@ -143,3 +143,112 @@ body {
     justify-content: center;
     padding: 10px;
 }
+
+/* General Button Styling */
+.btn-option {
+    background-color: white;
+    border: 2px solid #a262e3;
+    border-radius: 5px;
+    font-weight: normal;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    /* Smooth transitions for hover effects */
+}
+
+.btn-option:hover {
+    background-color: #f5f5f5;
+    /* Light hover effect */
+    border-color: #7b52a3;
+}
+
+/* Styling for Selected Option */
+.btn-option.selected {
+    background-color: #f0f0f0;
+    border-color: black;
+    font-weight: bold;
+}
+
+/* Styling for Correct Answer */
+.btn-option.correct {
+    background-color: #91DEC2;
+    border-color: #91DEC2;
+    font-weight: bold;
+    color: white;
+}
+
+/* Styling for Incorrect Answer */
+.btn-option.incorrect {
+    background-color: #F0C3C3;
+    border-color: #F0C3C3;
+    font-weight: bold;
+    color: white;
+}
+
+/* Styling for Disabled Buttons (After Submission) */
+.btn-option.disabled {
+    pointer-events: none;
+    /* Prevent further clicks */
+    opacity: 0.6;
+    /* Dim the button */
+}
+
+/* Submit and Next Button Styling */
+#btn-submit,
+#btn-next {
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#btn-submit:hover,
+#btn-next:hover {
+    background-color: #7b52a3;
+}
+
+#btn-next {
+    display: none;
+    /* Initially hidden until evaluation */
+}
+
+/* General Styling for Containers */
+#quizzes-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.quiz-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.quiz-option:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+}
+
+.quiz-option img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.quiz-option a {
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+}

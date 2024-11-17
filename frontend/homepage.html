@@ -6,11 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
     <link rel="stylesheet" href="./styles-homepage.css">
-    <title>Quiz app</title>
+    <title>Quiz App</title>
 </head>
 
 <body>
-
     <header class="header">
         <div id="navlist">
             <div class="navlist-right">
@@ -21,24 +20,24 @@
         <div class="logo">
             <img src="./images/logo.png" alt="Quiz Logo">
         </div>
-
     </header>
-  
-    <div class="content">
-        <div class="quiz-section">
-            <div class="quiz-options" id="quizzes-container"></div>
-        </div>
-    </div>
+
+    <main class="content">
+        <!-- Section for displaying quizzes dynamically -->
+        <section class="quiz-section">
+            <h2>Select a Quiz</h2>
+            <div class="quiz-options" id="quizzes-container">
+                <!-- Quizzes will be dynamically populated here by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <h4>Quiz App</h4>
+    </footer>
 
     <!-- Link to the external JavaScript file -->
     <script src="script.js"></script>
-
-    <div><br><br><br></div>
-
-
-    <footer class="footer">
-        <h4>Quiz app</h4>
-    </footer>
 </body>
 
 </html>

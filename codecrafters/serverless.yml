@@ -35,7 +35,7 @@ custom:
       localDir: ../frontend # Our local static files directory (e.g., public or dist)
       bucketPrefix: '' # We leave blank to sync at the root of the bucket
 
-
+# Seed data
 functions:
   seedData:
     handler: seed.seed_data
@@ -58,6 +58,14 @@ functions:
       - http:
           path: user/{userId}
           method: get
+
+  getUserByUsername:
+    handler: user.get_user_by_username
+    events:
+      - http:
+          path: users/username/{userName}
+          method: get
+
 
   getAllUsers:
     handler: user.get_all_users
@@ -205,11 +213,25 @@ resources:
             AttributeType: S # Partition Key (Primary Key)
           - AttributeName: SK
             AttributeType: S # Sort Key
+          - AttributeName: userName
+            AttributeType: S # Attribute for GSI Partition Key
         KeySchema:
           - AttributeName: PK
             KeyType: HASH # Partition Key
           - AttributeName: SK
             KeyType: RANGE # Sort Key
+        GlobalSecondaryIndexes:
+        - IndexName: UserNameIndex
+          KeySchema:
+            - AttributeName: userName
+              KeyType: HASH # Partition Key for the GSI
+            - AttributeName: SK
+              KeyType: RANGE # Optional Sort Key for the GSI
+          Projection:
+            ProjectionType: ALL # Include all attributes in the index
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5

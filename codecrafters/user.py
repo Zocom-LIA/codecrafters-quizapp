@@ -83,6 +83,39 @@ def get_user_by_id(event, context):
     }
 
 
+def get_user_by_username(event, context):
+    username = event['pathParameters']['userName']
+
+    # Query the GSI for the username
+    response = table.query(
+        IndexName='UserNameIndex',  # Use the GSI name
+        KeyConditionExpression=Key('userName').eq(
+            username) & Key('SK').eq("METADATA")
+    )
+
+    items = response.get('Items', [])
+
+    if not items:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'User not found'})
+        }
+
+    # Since SK ensures only one result for the username + metadata
+    user_metadata = items[0]
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'userId': user_metadata['PK'].split('#')[1],
+            'userName': user_metadata['userName'],
+            "fullName": user_metadata['fullName'],
+            "email": user_metadata['email'],
+            "role": user_metadata['role']
+        })
+    }
+
+
 def get_all_users(event, context):
     response = table.scan(
         FilterExpression=Attr("SK").eq("METADATA")
