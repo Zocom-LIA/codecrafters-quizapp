@@ -84,22 +84,36 @@ functions:
     handler: user.create_user_attempt
     events:
       - http:
-          path: uattempts
+          path: userattempts
           method: post
 
   getUserAttempt:
     handler: user.get_user_attempt
     events:
       - http:
-          path: uattempts/{userId}/{quizId}/{attemptId}
+          path: userattempts/{userId}/{quizId}/{attemptId}
           method: get
 
   updateUserAttempt:
     handler: user.update_user_attempt
     events:
       - http:
-          path: uattempts/{userId}/{quizId}/{attemptId}
+          path: userattempts/{userId}/{quizId}/{attemptId}
           method: put
+  
+  createUserAnswer:
+    handler: user.create_user_answer
+    events:
+      - http:
+          path: useranswers
+          method: post
+
+  getUserAnswers:
+    handler: user.get_user_answers
+    events:
+      - http:
+          path: useranswers/{userId}/{quizId}/{attemptId}
+          method: get
 
   # Quiz CRUD
   createQuiz:

@@ -302,3 +302,54 @@ def update_user_attempt(event, context):
         'statusCode': 200,
         'body': json.dumps({'message': 'User attempt updated successfully'})
     }
+
+
+def create_user_answer(event, context):
+    data = json.loads(event['body'])
+
+    user_id = data['userId']
+    quiz_id = data['quizId']
+    attempt_id = data['attemptId']
+    question_id = data['questionId']
+    user_answer = data['userAnswer']
+    status = data['status']
+
+    table.put_item(
+        Item={
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}#ATTEMPT#{attempt_id}",
+            'SK': f"QUESTION#{question_id}",
+            'userAnswer': user_answer,
+            'status': status
+        }
+    )
+
+    return {
+        'statusCode': 201,
+        'body': json.dumps({'message': 'User answer created successfully'})
+    }
+
+
+def get_user_answers(event, context):
+    data = event['pathParameters']
+    user_id = data['userId']
+    quiz_id = data['quizId']
+    attempt_id = data['attemptId']
+
+    response = table.query(
+        KeyConditionExpression=Key('PK').eq(
+            f"USER#{user_id}#QUIZ#{quiz_id}#ATTEMPT#{attempt_id}"
+        ) & Key('SK').begins_with("QUESTION#")
+    )
+
+    items = response.get('Items', [])
+
+    answers = [{
+        'questionId': item['SK'].split('#')[1],
+        'userAnswer': item['userAnswer'],
+        'status': item['status']
+    } for item in items]
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'answers': answers})
+    }
