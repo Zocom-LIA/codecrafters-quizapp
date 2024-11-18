@@ -23,7 +23,7 @@ def create_user_answer(event, context):
     question_id = data['questionId']
     user_answer = data['userAnswer']
 
-    # Fetch the user attempt to validate state
+    # Fetch the user attempt
     response = table.get_item(
         Key={
             'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
@@ -64,6 +64,20 @@ def create_user_answer(event, context):
     correct_answer = question['correctAnswer']
     status = 'pass' if user_answer == correct_answer else 'fail'
 
+    # Update the score if the answer is correct
+    if status == 'pass':
+        table.update_item(
+            Key={
+                'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
+                'SK': f"ATTEMPT#{attempt_id}"
+            },
+            UpdateExpression="SET score = if_not_exists(score, :start) + :increment",
+            ExpressionAttributeValues={
+                ':start': 0,  # Initialize score if it doesn't exist
+                ':increment': 100
+            }
+        )
+
     # Store the answer in the database
     table.put_item(
         Item={
@@ -76,7 +90,7 @@ def create_user_answer(event, context):
 
     return {
         'statusCode': 201,
-        'body': json.dumps({'message': 'User answer created successfully', 'status': status})
+        'body': json.dumps({'message': 'User answer created successfully', 'status': status, 'correctAnswers': correct_answer})
     }
 
 

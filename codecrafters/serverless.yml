@@ -120,7 +120,7 @@ functions:
     handler: attempt.move_to_next_question
     events:
       - http:
-          path: quiz/progress/{userId}/{quizId}/{attemptId}/next
+          path: quiz/progress/next
           method: post
 
   createUserAnswer:

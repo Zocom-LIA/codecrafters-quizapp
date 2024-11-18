@@ -57,13 +57,13 @@ async function handleLogin() {
     } catch (error) {
         errorMessage.textContent = 'Invalid username. Please try again.';
         errorMessage.style.display = 'block';
-        console.error('Error validating username:', error);
+        console.error(`Error validating username`, error);
     }
 }
 
 async function validateUsername(username) {
     try {
-        const response = await fetch(`${baseUrl}/${stage}/users/${username}`);
+        const response = await fetch(`${baseUrl}/${stage}/users/username/${username}`);
         if (!response.ok) throw new Error('User not found');
         return await response.json(); // Assume the response contains user data including the role
     } catch (error) {
@@ -215,20 +215,119 @@ function displayErrorMessage(message) {
 // --- QUESTION PAGE LOGIC ---
 //
 
+function setupNextButtonListener() {
+    const nextButton = document.getElementById('btn-dynamic');
+    nextButton.addEventListener('click', async () => {
+        try {
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+            const response = await moveToNextQuestion(userId, selectedQuizId, userAttemptId);
+            console.log('Move to next question response:', response);
+
+            if (response.questionId) {
+                loadAndDisplayQuestion(response); // Load the next question
+            } else {
+                window.location.href = 'results.html'; // No more questions
+            }
+        } catch (error) {
+            console.error('Error moving to the next question:', error);
+        }
+    });
+}
+
+
 async function handleQuestionPage() {
+    // Load the first question
+    await loadAndDisplayQuestion();
+
+    // Set up the dynamic button behavior
+    const dynamicButton = document.getElementById('btn-dynamic');
+    dynamicButton.addEventListener('click', async () => {
+        const mode = dynamicButton.dataset.mode;
+
+        if (mode === 'submit') {
+            await handleSubmit();
+        } else if (mode === 'next') {
+            await handleNext();
+        }
+    });
+}
+
+async function handleSubmit() {
+    const selectedOption = document.querySelector('.btn-option.selected');
+    if (!selectedOption) {
+        alert('Please select an answer');
+        return;
+    }
+
+    const userAnswer = selectedOption.dataset.option;
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
     const userAttemptId = sessionStorage.getItem('userAttemptId');
+    const questionId = sessionStorage.getItem('currentQuestionId'); // Assume this is stored when a question is displayed
+
     try {
-        const currentQuestion = await getCurrentQuestion(userAttemptId);
-        displayQuestion(currentQuestion);
-        setupSubmitButton(userAttemptId, currentQuestion.questionId);
+        const evaluation = await submitAnswer(userId, selectedQuizId, userAttemptId, questionId, userAnswer);
+        displayEvaluation(evaluation, userAttemptId);
+
+        // Change button state to "Next"
+        const dynamicButton = document.getElementById('btn-dynamic');
+        dynamicButton.textContent = 'Next';
+        dynamicButton.dataset.mode = 'next';
     } catch (error) {
-        console.error('Error loading question:', error);
+        console.error('Error submitting answer:', error);
     }
 }
 
-async function getCurrentQuestion(userAttemptId) {
+async function handleNext() {
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+    const userAttemptId = sessionStorage.getItem('userAttemptId');
+
     try {
-        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/${userAttemptId}`);
+        const response = await moveToNextQuestion(userId, selectedQuizId, userAttemptId);
+
+        if (response.questionId) {
+            loadAndDisplayQuestion(response);
+
+            // Change button state back to "Submit"
+            const dynamicButton = document.getElementById('btn-dynamic');
+            dynamicButton.textContent = 'Submit';
+            dynamicButton.dataset.mode = 'submit';
+        } else {
+            window.location.href = 'results.html'; // No more questions
+        }
+    } catch (error) {
+        console.error('Error moving to next question:', error);
+    }
+}
+
+
+async function loadAndDisplayQuestion(questionData = null) {
+    if (!questionData) {
+        // Fetch the current question if no data is passed (initial page load)
+        try {
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+            questionData = await getCurrentQuestion(userId, selectedQuizId, userAttemptId);
+        } catch (error) {
+            console.error('Error loading current question:', error);
+            return;
+        }
+    }
+
+    // Display the question
+    displayQuestion(questionData);
+}
+
+
+async function getCurrentQuestion(userId, selectedQuizId, userAttemptId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/${userId}/${selectedQuizId}/${userAttemptId}`);
         if (!response.ok) throw new Error('Failed to fetch current question');
         return await response.json();
     } catch (error) {
@@ -237,17 +336,17 @@ async function getCurrentQuestion(userAttemptId) {
     }
 }
 
-function displayQuestion(question) {
+function displayQuestion(questionData) {
     const questionText = document.getElementById('heading-question-text');
-    questionText.textContent = question.questionText;
+    questionText.textContent = questionData.questionText;
 
     const questionNumber = document.getElementById('heading-question-number');
-    questionNumber.textContent = `Question ${question.currentNumber} of ${question.totalQuestions}`;
+    questionNumber.textContent = `Question ${questionData.currentNumber} of ${questionData.totalQuestions}`;
 
     const optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = ''; // Clear existing options
 
-    question.options.forEach((option) => {
+    questionData.options.forEach((option) => {
         const button = document.createElement('button');
         button.className = 'btn-option';
         button.textContent = option;
@@ -260,10 +359,13 @@ function displayQuestion(question) {
 
         optionsContainer.appendChild(button);
     });
+
+    // Store the current question ID
+    sessionStorage.setItem('currentQuestionId', questionData.questionId);
 }
 
 function setupSubmitButton(userAttemptId, questionId) {
-    const submitButton = document.getElementById('btn-submit');
+    const submitButton = document.getElementById('btn-dynamic');
     submitButton.addEventListener('click', async () => {
         const selectedOption = document.querySelector('.btn-option.selected');
         if (!selectedOption) {
@@ -273,20 +375,22 @@ function setupSubmitButton(userAttemptId, questionId) {
 
         const userAnswer = selectedOption.dataset.option;
         try {
-            const evaluation = await submitAnswer(userAttemptId, questionId, userAnswer);
-            displayEvaluation(evaluation);
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const evaluation = await submitAnswer(userId, selectedQuizId, userAttemptId, questionId, userAnswer);
+            displayEvaluation(evaluation, userAttemptId);
         } catch (error) {
             console.error('Error submitting answer:', error);
         }
     });
 }
 
-async function submitAnswer(userAttemptId, questionId, userAnswer) {
+async function submitAnswer(userId, quizId, attemptId, questionId, userAnswer) {
     try {
         const response = await fetch(`${baseUrl}/${stage}/answers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userAttemptId, questionId, userAnswer }),
+            body: JSON.stringify({ userId, quizId, attemptId, questionId, userAnswer }),
         });
         if (!response.ok) throw new Error('Failed to submit answer');
         return await response.json();
@@ -296,7 +400,7 @@ async function submitAnswer(userAttemptId, questionId, userAnswer) {
     }
 }
 
-function displayEvaluation(evaluation) {
+function displayEvaluation(evaluation, userAttemptId) {
     const correctAnswers = evaluation.correctAnswers; // Backend should return this in the response
     document.querySelectorAll('.btn-option').forEach((button) => {
         if (correctAnswers.includes(button.textContent)) {
@@ -306,21 +410,20 @@ function displayEvaluation(evaluation) {
         }
     });
 
-    const nextButton = document.getElementById('btn-next');
-    nextButton.style.display = 'block'; // Show Next button
-    nextButton.addEventListener('click', async () => {
-        try {
-            const nextQuestion = await moveToNextQuestion(evaluation.userAttemptId);
-            displayQuestion(nextQuestion);
-        } catch (error) {
-            console.error('Error moving to next question:', error);
-        }
-    });
+    const nextButton = document.getElementById('btn-dynamic');
+    nextButton.style.display = 'block';
+
+    // "Next" button is already set up, no need to duplicate listeners
 }
 
-async function moveToNextQuestion(userAttemptId) {
+
+async function moveToNextQuestion(userId, quizId, attemptId) {
     try {
-        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/${userAttemptId}/next`, { method: 'POST' });
+        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, quizId, attemptId }),
+        });
         if (!response.ok) throw new Error('Failed to move to next question');
         return await response.json();
     } catch (error) {

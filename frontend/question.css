@@ -194,8 +194,7 @@ body {
 }
 
 /* Submit and Next Button Styling */
-#btn-submit,
-#btn-next {
+#btn-dynamic {
     background-color: #a262e3;
     color: white;
     border: none;
@@ -206,14 +205,8 @@ body {
     transition: background-color 0.3s ease;
 }
 
-#btn-submit:hover,
-#btn-next:hover {
+#btn-dynamic:hover {
     background-color: #7b52a3;
-}
-
-#btn-next {
-    display: none;
-    /* Initially hidden until evaluation */
 }
 
 /* General Styling for Containers */
