@@ -25,6 +25,8 @@ async function init() {
         await handleQuestionPage();
     } else if (pathname.includes('results.html')) {
         await handleResultsPage();
+    } else if (pathname.includes('user-attempts.html')) {
+        await handleUserAttemptsPage();
     }
 }
 
@@ -463,4 +465,50 @@ function displayResults(score, timeTaken) {
     } else {
         timeElement.textContent = 'Time Taken: Not available';
     }
+}
+
+//
+// --- USER ATTEMPTS PAGE LOGIC ---
+//
+
+async function handleUserAttemptsPage() {
+    const userId = sessionStorage.getItem('userId');
+
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch user attempts');
+        const { attempts } = await response.json();
+        displayAttempts(attempts);
+    } catch (error) {
+        console.error('Error loading user attempts:', error);
+    }
+}
+
+function displayAttempts(attempts) {
+    const container = document.getElementById('attempts-container');
+    container.innerHTML = '';
+
+    attempts.forEach(async (attempt) => {
+        const quiz = await fetchQuizById(attempt.quizId);
+
+        const attemptDiv = document.createElement('div');
+        attemptDiv.classList.add('attempt-entry');
+        console.log(`attempt id: ${attempt.attemptId}`)
+
+        attemptDiv.innerHTML = `
+            <h3>${quiz.title}</h3>
+            <p>Date Started: ${formatDateTime(attempt.dateStarted)}</p>
+            <p>Score: ${attempt.score}</p>
+            <p>Time Taken: ${attempt.timeTaken.minutes} minutes ${attempt.timeTaken.seconds} seconds</p>
+        `;
+
+        container.appendChild(attemptDiv);
+    });
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    const formattedDate = date.toISOString().split('T')[0]; // Extracts 'YYYY-MM-DD'
+    const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${formattedDate} ${formattedTime}`;
 }

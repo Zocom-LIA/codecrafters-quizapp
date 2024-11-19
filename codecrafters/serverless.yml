@@ -102,6 +102,13 @@ functions:
           path: attempts/{userId}/{quizId}/{attemptId}
           method: get
 
+  listUserAttempt:
+    handler: attempt.list_user_attempts
+    events:
+      - http:
+          path: attempts/{userId}
+          method: get
+
   updateUserAttempt:
     handler: attempt.update_user_attempt
     events:
@@ -201,6 +208,14 @@ functions:
       - http:
           path: quiz/{quizId}/question/{questionId}
           method: delete
+  backfillUserAndQuizIds:
+    handler: backfill.handler
+    timeout: 300
+    memorySize: 128
+    events:
+      - http:
+          path: run-backfill
+          method: post
 resources:
   Resources:
     QuizTable:
@@ -214,34 +229,46 @@ resources:
           - AttributeName: SK
             AttributeType: S # Sort Key
           - AttributeName: userName
-            AttributeType: S # Attribute for GSI Partition Key
+            AttributeType: S # Attribute for existing GSI
+          - AttributeName: userId
+            AttributeType: S # Attribute for new GSI Partition Key
+          - AttributeName: quizId
+            AttributeType: S # Attribute for new GSI Sort Key
         KeySchema:
           - AttributeName: PK
             KeyType: HASH # Partition Key
           - AttributeName: SK
             KeyType: RANGE # Sort Key
         GlobalSecondaryIndexes:
-        - IndexName: UserNameIndex
-          KeySchema:
-            - AttributeName: userName
-              KeyType: HASH # Partition Key for the GSI
-            - AttributeName: SK
-              KeyType: RANGE # Optional Sort Key for the GSI
-          Projection:
-            ProjectionType: ALL # Include all attributes in the index
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
+          - IndexName: UserNameIndex
+            KeySchema:
+              - AttributeName: userName
+                KeyType: HASH
+              - AttributeName: SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: UserAttemptsIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH # GSI Partition Key
+              - AttributeName: quizId
+                KeyType: RANGE # GSI Sort Key (Optional)
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        # Enable Point-in-time Recovery for safety (Optional)
         PointInTimeRecoverySpecification:
           PointInTimeRecoveryEnabled: true
-        # Table-level Encryption (Optional)
         SSESpecification:
           SSEEnabled: true
-
     WebsiteBucket:
       Type: AWS::S3::Bucket
       Properties:

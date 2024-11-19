@@ -5,6 +5,7 @@ import random
 from decimal import Decimal
 import boto3
 from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr
 
 # True for now as we need to test it in locally first
 if False:
@@ -34,9 +35,9 @@ def convert_decimal(obj):
 
 def create_user_attempt(event, context):
     data = json.loads(event['body'])
-
     user_attempt_id = str(uuid.uuid4())
     quiz_id = data['quizId']
+    user_id = data['userId']
 
     # Fetch all questions for the quiz
     response = table.query(
@@ -58,11 +59,13 @@ def create_user_attempt(event, context):
     # Create UserAttempt with question order
     table.put_item(
         Item={
-            'PK': f"USER#{data['userId']}#QUIZ#{quiz_id}",
+            'PK': f"USER#{user_id}#QUIZ#{quiz_id}",
             'SK': f"ATTEMPT#{user_attempt_id}",
             "score": 0,
             "dateStarted": str(datetime.now()),
             "dateFinished": None,
+            'userId': user_id,  # Add for GSI
+            'quizId': quiz_id,  # Add for GSI
             "questionOrder": question_order,
             "currentQuestionId": question_order[0],
             "progress": 0
@@ -130,6 +133,45 @@ def get_user_attempt(event, context):
             'currentQuestionId': attempt.get('currentQuestionId'),
             'progress': attempt.get('progress', 0)
         })
+    }
+
+
+def list_user_attempts(event, context):
+    user_id = event['pathParameters']['userId']
+
+    # Query all quiz attempts for the user using the GSI
+    response = table.query(
+        IndexName='UserAttemptsIndex',
+        KeyConditionExpression=Key('userId').eq(user_id)
+    )
+
+    attempts = response.get('Items', [])
+
+    # Filter out attempts where 'dateFinished' is missing or invalid
+    completed_attempts = [
+        attempt for attempt in attempts
+        if isinstance(attempt.get('dateFinished'), str)
+    ]
+
+    # Convert Decimals and calculate time taken
+    completed_attempts = convert_decimal(completed_attempts)
+    for attempt in completed_attempts:
+        date_started = datetime.fromisoformat(attempt['dateStarted'])
+        date_finished = datetime.fromisoformat(attempt['dateFinished'])
+
+        time_delta = date_finished - date_started
+        attempt['timeTaken'] = {
+            'minutes': time_delta.seconds // 60,
+            'seconds': time_delta.seconds % 60
+        }
+
+        # Extract attemptId from SK and add it to the response
+        if 'SK' in attempt and attempt['SK'].startswith('ATTEMPT#'):
+            attempt['attemptId'] = attempt['SK'].split('#')[1]
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'attempts': completed_attempts})
     }
 
 
