@@ -14,15 +14,17 @@ if (window.location.hostname === '127.0.0.1') {
 async function init() {
     const pathname = window.location.pathname;
 
-    if (pathname.includes('homepage.html')) {
+    if (pathname.includes('index.html')) {
+        const loginButton = document.getElementById('login-button');
+        loginButton.addEventListener('click', handleLogin);
+    } else if (pathname.includes('homepage.html')) {
         await handleHomepage();
     } else if (pathname.includes('description.html')) {
         await handleQuizDescription();
     } else if (pathname.includes('question.html')) {
         await handleQuestionPage();
-    } else if (pathname.includes('index.html')) {
-        const loginButton = document.getElementById('login-button');
-        loginButton.addEventListener('click', handleLogin);
+    } else if (pathname.includes('results.html')) {
+        await handleResultsPage();
     }
 }
 
@@ -210,7 +212,6 @@ function displayErrorMessage(message) {
     descriptionBox.textContent = message;
 }
 
-
 //
 // --- QUESTION PAGE LOGIC ---
 //
@@ -236,7 +237,6 @@ function setupNextButtonListener() {
         }
     });
 }
-
 
 async function handleQuestionPage() {
     // Load the first question
@@ -429,5 +429,38 @@ async function moveToNextQuestion(userId, quizId, attemptId) {
     } catch (error) {
         console.error('Error moving to next question:', error);
         throw error;
+    }
+}
+
+//
+// --- QUIZ RESULT PAGE LOGIC ---
+//
+
+async function handleResultsPage() {
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+    const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}/${selectedQuizId}/${userAttemptId}`);
+        if (!response.ok) throw new Error('Failed to fetch user attempt details');
+
+        const { score, timeTaken } = await response.json();
+
+        displayResults(score, timeTaken);
+    } catch (error) {
+        console.error('Error loading results:', error);
+    }
+}
+
+function displayResults(score, timeTaken) {
+    const scoreElement = document.getElementById('score');
+    const timeElement = document.getElementById('time-taken');
+
+    scoreElement.textContent = `Score: ${score}`;
+    if (timeTaken) {
+        timeElement.textContent = `Time Taken: ${timeTaken.minutes} minutes and ${timeTaken.seconds} seconds`;
+    } else {
+        timeElement.textContent = 'Time Taken: Not available';
     }
 }

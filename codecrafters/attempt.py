@@ -1,10 +1,10 @@
 import json
-import boto3
 import uuid
 from datetime import datetime
-from boto3.dynamodb.conditions import Key
-from boto3.dynamodb.conditions import Attr
 import random
+from decimal import Decimal
+import boto3
+from boto3.dynamodb.conditions import Key
 
 # True for now as we need to test it in locally first
 if False:
@@ -14,6 +14,22 @@ else:
     dynamodb = boto3.resource('dynamodb')
 
 table = dynamodb.Table('QuizTable')
+
+# DynamoDB often returns numeric fields as Decimal objects when using Python's boto3 library.
+# These Decimal objects are not directly serializable into JSON.
+# We use a helper function to convert Decimal to int/float.
+
+
+def convert_decimal(obj):
+    if isinstance(obj, list):
+        return [convert_decimal(item) for item in obj]
+    if isinstance(obj, dict):
+        return {key: convert_decimal(value) for key, value in obj.items()}
+    if isinstance(obj, Decimal):
+        # Convert Decimal to int if it's an integer value, otherwise float
+        return int(obj) if obj % 1 == 0 else float(obj)
+    else:
+        return obj
 
 
 def create_user_attempt(event, context):
@@ -83,19 +99,36 @@ def get_user_attempt(event, context):
             'body': json.dumps({'message': 'User attempt not found'})
         }
 
-    # Return all fields, including state-tracking attributes
+    # Convert Decimals to standard Python types
+    attempt = convert_decimal(attempt)
+
+    # Calculate time taken if dateFinished exists
+    date_started = datetime.fromisoformat(attempt['dateStarted'])
+    date_finished = attempt.get('dateFinished')
+    time_taken = None
+
+    if date_finished:
+        date_finished = datetime.fromisoformat(date_finished)
+        time_delta = date_finished - date_started
+        time_taken = {
+            'minutes': time_delta.seconds // 60,
+            'seconds': time_delta.seconds % 60
+        }
+
+    # Return attempt details
     return {
         'statusCode': 200,
         'body': json.dumps({
             'userId': user_id,
             'quizId': quiz_id,
             'attemptId': attempt_id,
-            'score': attempt['score'],
+            'score': attempt.get('score', 0),
             'dateStarted': attempt['dateStarted'],
             'dateFinished': attempt.get('dateFinished'),
-            'questionOrder': attempt['questionOrder'],
-            'currentQuestionId': attempt['currentQuestionId'],
-            'progress': attempt['progress']
+            'timeTaken': time_taken,
+            'questionOrder': attempt.get('questionOrder', []),
+            'currentQuestionId': attempt.get('currentQuestionId'),
+            'progress': attempt.get('progress', 0)
         })
     }
 
