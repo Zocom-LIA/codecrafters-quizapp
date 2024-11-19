@@ -227,7 +227,6 @@ function setupNextButtonListener() {
             const userAttemptId = sessionStorage.getItem('userAttemptId');
 
             const response = await moveToNextQuestion(userId, selectedQuizId, userAttemptId);
-            console.log('Move to next question response:', response);
 
             if (response.questionId) {
                 loadAndDisplayQuestion(response); // Load the next question
@@ -484,25 +483,85 @@ async function handleUserAttemptsPage() {
     }
 }
 
-function displayAttempts(attempts) {
+async function displayAttempts(attempts) {
     const container = document.getElementById('attempts-container');
     container.innerHTML = '';
 
-    attempts.forEach(async (attempt) => {
+    const promises = attempts.map(async (attempt) => {
         const quiz = await fetchQuizById(attempt.quizId);
 
         const attemptDiv = document.createElement('div');
         attemptDiv.classList.add('attempt-entry');
-        console.log(`attempt id: ${attempt.attemptId}`)
 
         attemptDiv.innerHTML = `
             <h3>${quiz.title}</h3>
             <p>Date Started: ${formatDateTime(attempt.dateStarted)}</p>
             <p>Score: ${attempt.score}</p>
             <p>Time Taken: ${attempt.timeTaken.minutes} minutes ${attempt.timeTaken.seconds} seconds</p>
+            <button class="view-answers" data-attempt-id="${attempt.attemptId}">View Answers</button>
         `;
 
         container.appendChild(attemptDiv);
+    });
+    await Promise.all(promises);
+    setupAnswerButtons();
+}
+
+function setupAnswerButtons() {
+    const buttons = document.querySelectorAll('.view-answers');
+    buttons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            const attemptId = event.target.dataset.attemptId;
+            await showAnswersModal(attemptId);
+        });
+    });
+}
+
+async function showAnswersModal(attemptId) {
+    try {
+        // Fetch user attempt details to get the associated quizId
+        const userAttemptResponse = await fetch(`${baseUrl}/${stage}/attempts/details/${attemptId}`);
+        if (!userAttemptResponse.ok) throw new Error('Failed to fetch user attempt details');
+        const userAttempt = await userAttemptResponse.json();
+
+        const quizId = userAttempt.quizId;
+        const userId = userAttempt.userId;
+
+        // Fetch answers for the attempt
+        const response = await fetch(`${baseUrl}/${stage}/answers/${userId}/${quizId}/${attemptId}`);
+        if (!response.ok) throw new Error('Failed to fetch answers');
+
+        const { answers } = await response.json();
+
+        // Display the answers in the modal
+        displayAnswers(answers);
+    } catch (error) {
+        console.error('Error loading answers:', error);
+    }
+}
+
+
+function displayAnswers(answers) {
+    const container = document.getElementById('answers-container');
+    container.innerHTML = ''; // Clear existing answers
+
+    answers.forEach((answer) => {
+        const answerDiv = document.createElement('div');
+        answerDiv.classList.add('answer-entry', answer.status === 'pass' ? 'correct' : 'incorrect');
+        answerDiv.innerHTML = `
+            <p>Question: ${answer.questionText}</p>
+            <p>Your Answer: ${answer.userAnswer}</p>
+            <p>Correct Answer: ${answer.correctAnswer}</p>
+        `;
+        container.appendChild(answerDiv);
+    });
+
+    const modal = document.getElementById('answers-modal');
+    modal.style.display = 'block';
+
+    const closeButton = document.querySelector('.close-button');
+    closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
     });
 }
 

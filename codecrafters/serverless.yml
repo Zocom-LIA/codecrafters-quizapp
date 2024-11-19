@@ -109,6 +109,14 @@ functions:
           path: attempts/{userId}
           method: get
 
+  getUserAttemptDetails:
+    handler: attempt.get_user_attempt_details
+    events:
+      - http:
+          path: attempts/details/{attemptId}
+          method: get
+
+
   updateUserAttempt:
     handler: attempt.update_user_attempt
     events:
@@ -210,7 +218,7 @@ functions:
           method: delete
   backfillUserAndQuizIds:
     handler: backfill.handler
-    timeout: 300
+    timeout: 20
     memorySize: 128
     events:
       - http:

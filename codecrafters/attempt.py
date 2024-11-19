@@ -175,6 +175,33 @@ def list_user_attempts(event, context):
     }
 
 
+def get_user_attempt_details(event, context):
+    attempt_id = event['pathParameters']['attemptId']
+
+    response = table.scan(
+        FilterExpression=Key('SK').eq(f"ATTEMPT#{attempt_id}")
+    )
+    items = response.get('Items', [])
+    if not items:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'Attempt not found'})
+        }
+
+    attempt = items[0]
+    attempt = convert_decimal(attempt)
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'userId': attempt['userId'],
+            'quizId': attempt['quizId'],
+            'dateStarted': attempt['dateStarted'],
+            'dateFinished': attempt['dateFinished'],
+            'score': attempt['score']
+        })
+    }
+
+
 def update_user_attempt(event, context):
     data = json.loads(event['body'])
     user_id = event['pathParameters']['userId']

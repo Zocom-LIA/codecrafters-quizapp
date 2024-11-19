@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.conditions import Attr
+from attempt import convert_decimal
 
 # True for now as we need to test it in locally first
 if False:
@@ -100,22 +101,34 @@ def get_user_answers(event, context):
     quiz_id = data['quizId']
     attempt_id = data['attemptId']
 
-    # Query all answers for the UserAttempt
+    # Query all answers for the given attempt
     response = table.query(
-        KeyConditionExpression=Key('PK').eq(
-            f"USER#{user_id}#QUIZ#{quiz_id}#ATTEMPT#{attempt_id}"
-        ) & Key('SK').begins_with("QUESTION#")
+        KeyConditionExpression=Key('PK').eq(f"USER#{user_id}#QUIZ#{
+            quiz_id}#ATTEMPT#{attempt_id}")
     )
 
-    items = response.get('Items', [])
-    answers = [
-        {
-            'questionId': item['SK'].split('#')[1],
-            'userAnswer': item['userAnswer'],
-            'status': item['status']
-        }
-        for item in items
-    ]
+    answers = response.get('Items', [])
+
+    # Fetch question details for each answer
+    for answer in answers:
+        question_id = answer['SK'].split('#')[1]
+
+        # Fetch the question from the database
+        question_response = table.get_item(
+            Key={
+                'PK': f"QUIZ#{quiz_id}",
+                'SK': f"QUESTION#{question_id}"
+            }
+        )
+        question = question_response.get('Item')
+
+        # Include question text and correct answer in the response
+        if question:
+            answer['questionText'] = question['questionText']
+            answer['correctAnswer'] = question['correctAnswer']
+
+    # Convert Decimals to JSON-serializable types
+    answers = convert_decimal(answers)
 
     return {
         'statusCode': 200,
