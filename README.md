@@ -20,23 +20,49 @@ In this project, the following technologies are used:
 <br>
 
 ## Endpoints
-In the beginning of the following endpoints, the base url should be added which has the following format:
-`https://{uniqueID}.execute-api.{region}.amazonaws.com `
+In the beginning of the following endpoints, the base URL should be added which has the following format:  
+`https://{uniqueID}.execute-api.{region}.amazonaws.com/dev`
 
 ### Quiz
-- Seed quiz data (POST): `/dev/seed`
-- Create quiz (POST): `/dev/quiz`
-- Get quiz by ID (GET): `/dev/quiz/{quizId}`
-- Get all quizzes (GET): `/dev/quiz`
-- Update quiz by quiz ID (PUT): `/dev/quiz/{quizId`
-- Delete quiz by quiz ID (DELETE): `/dev/quiz/{quizId}`
+- **Seed quiz data (POST):** `/seed`
+- **Create quiz (POST):** `/quiz`
+- **Get quiz by ID (GET):** `/quiz/{quizId}`
+- **Get all quizzes (GET):** `/quiz`
+- **Update quiz by quiz ID (PUT):** `/quiz/{quizId}`
+- **Delete quiz by quiz ID (DELETE):** `/quiz/{quizId}`
 
 ### Question
-- Seed question data (POST): `/dev/seed-questions`
-- Create question (POST): `/dev/quiz/{quizId}/question`
-- Get questions by quiz ID (GET): `/dev/quiz/{quizId}/questions`
-- Update question by quiz ID and question ID (PUT): `h/dev/quiz/{quizId}/question/{questionId}`
-- Delete question by quiz ID and question ID (DELETE): `/dev/quiz/{quizId}/question/{questionId}`
+- **Seed question data (POST):** `/seed-questions`
+- **Create question (POST):** `/quiz/{quizId}/question`
+- **Get questions by quiz ID (GET):** `/quiz/{quizId}/questions`
+- **Update question by quiz ID and question ID (PUT):** `/quiz/{quizId}/question/{questionId}`
+- **Delete question by quiz ID and question ID (DELETE):** `/quiz/{quizId}/question/{questionId}`
+
+### User
+- **Create user (POST):** `/user`
+- **Get user by ID (GET):** `/user/{userId}`
+- **Get user by username (GET):** `/users/username/{userName}`
+- **Get all users (GET):** `/user`
+- **Update user by user ID (PUT):** `/user/{userId}`
+- **Delete user by user ID (DELETE):** `/user/{userId}`
+
+### User Attempt
+- **Create user attempt (POST):** `/attempts`
+- **Get user attempt by user ID, quiz ID, and attempt ID (GET):** `/attempts/{userId}/{quizId}/{attemptId}`
+- **List all attempts by user ID (GET):** `/attempts/{userId}`
+- **Get user attempt details by attempt ID (GET):** `/attempts/details/{attemptId}`
+- **Update user attempt (PUT):** `/attempts/{userId}/{quizId}/{attemptId}`
+
+### Progress
+- **Get current question in progress (GET):** `/quiz/progress/{userId}/{quizId}/{attemptId}`
+- **Move to next question in progress (POST):** `/quiz/progress/next`
+
+### Answer
+- **Create user answer (POST):** `/answers`
+- **Get all user answers by user ID, quiz ID, and attempt ID (GET):** `/answers/{userId}/{quizId}/{attemptId}`
+
+### Miscellaneous
+- **Backfill user and quiz IDs (POST):** `/run-backfill`
 
 ### Testing
 In order to test the endpoints, we can either test with the production or with the local endpoints. The instructions below show testing using the local endpoints. There are 3 options for testing the endpoints:
