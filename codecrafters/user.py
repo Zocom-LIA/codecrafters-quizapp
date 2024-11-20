@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.conditions import Attr
+from attempt import convert_decimal
 
 # True for now as we need to test it in locally first
 if False:
@@ -237,4 +238,26 @@ def delete_user(event, context):
     return {
         'statusCode': 204,
         'body': json.dumps({'message': 'User deleted successfully'})
+    }
+
+
+def list_students(event, context):
+    # Scan the table for all users with role = "student"
+    response = table.scan(
+        FilterExpression=Attr("SK").eq("METADATA")
+        & Attr('role').eq('student')
+    )
+
+    students = response.get('Items', [])
+    students = convert_decimal(students)
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'students': [
+                {'userId': student['PK'].split(
+                    '#')[1], 'userName': student['userName']}
+                for student in students if student['PK'].startswith('USER#')
+            ]
+        })
     }

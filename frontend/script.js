@@ -53,7 +53,7 @@ async function handleLogin() {
         if (user.role === 'student') {
             window.location.href = 'homepage.html';
         } else if (user.role === 'teacher') {
-            window.location.href = 'teacher.html'; // Define the teacher page later
+            window.location.href = 'user-attempts.html'; // Define the teacher page later
         } else {
             errorMessage.textContent = 'Unknown role. Please contact support.';
             errorMessage.style.display = 'block';
@@ -471,15 +471,47 @@ function displayResults(score, timeTaken) {
 //
 
 async function handleUserAttemptsPage() {
+    updateHomeLink();
+
     const userId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole'); // Assume role is stored in session
 
     try {
-        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch user attempts');
-        const { attempts } = await response.json();
-        displayAttempts(attempts);
+        if (userRole === 'teacher') {
+            await setupStudentDropdown();
+        } else if (userRole === 'student') {
+            const attempts = await fetchAttempts(userId);
+            displayAttempts(attempts);
+        }
     } catch (error) {
         console.error('Error loading user attempts:', error);
+    }
+}
+
+async function setupStudentDropdown() {
+    const dropdown = document.getElementById('student-dropdown');
+    dropdown.style.display = 'block'; // Ensure the dropdown is visible for teachers
+
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/user/students`);
+        if (!response.ok) throw new Error('Failed to fetch student list');
+
+        const { students } = await response.json();
+
+        // Populate dropdown with student names
+        dropdown.innerHTML = `
+            <option value="" disabled selected>Select a student</option>
+            ${students.map((student) => `<option value="${student.userId}">${student.userName}</option>`).join('')}
+        `;
+
+        // Add event listener to fetch attempts for selected student
+        dropdown.addEventListener('change', async (event) => {
+            const userId = event.target.value; // Selected student's userId
+            const attempts = await fetchAttempts(userId);
+            displayAttempts(attempts);
+        });
+    } catch (error) {
+        console.error('Error fetching student list:', error);
     }
 }
 
@@ -505,6 +537,18 @@ async function displayAttempts(attempts) {
     });
     await Promise.all(promises);
     setupAnswerButtons();
+}
+
+async function fetchAttempts(userId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch attempts');
+        const { attempts } = await response.json();
+        return attempts;
+    } catch (error) {
+        console.error('Error fetching attempts:', error);
+        return [];
+    }
 }
 
 function setupAnswerButtons() {
@@ -570,4 +614,17 @@ function formatDateTime(dateString) {
     const formattedDate = date.toISOString().split('T')[0]; // Extracts 'YYYY-MM-DD'
     const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     return `${formattedDate} ${formattedTime}`;
+}
+
+function updateHomeLink() {
+    const userRole = sessionStorage.getItem('userRole');
+    const homeLink = document.getElementById('link-home');
+
+    if (userRole === 'teacher') {
+        homeLink.href = 'teacher-dashboard.html';
+    } else if (userRole === 'student') {
+        homeLink.href = 'homepage.html';
+    } else {
+        homeLink.href = 'index.html';
+    }
 }

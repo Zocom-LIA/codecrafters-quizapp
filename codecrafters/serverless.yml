@@ -66,7 +66,6 @@ functions:
           path: users/username/{userName}
           method: get
 
-
   getAllUsers:
     handler: user.get_all_users
     events:
@@ -87,7 +86,15 @@ functions:
       - http:
           path: user/{userId}
           method: delete
+  
+  listStudents:
+    handler: user.list_students
+    events:
+      - http:
+          path: user/students
+          method: get
 
+# User Attempts
   createUserAttempt:
     handler: attempt.create_user_attempt
     events:
@@ -116,7 +123,6 @@ functions:
           path: attempts/details/{attemptId}
           method: get
 
-
   updateUserAttempt:
     handler: attempt.update_user_attempt
     events:
@@ -124,6 +130,7 @@ functions:
           path: attempts/{userId}/{quizId}/{attemptId}
           method: put
   
+  # Questions
   getCurrentQuestion:
     handler: attempt.get_current_question
     events:
@@ -138,6 +145,7 @@ functions:
           path: quiz/progress/next
           method: post
 
+# User Answers
   createUserAnswer:
     handler: answer.create_user_answer
     events:

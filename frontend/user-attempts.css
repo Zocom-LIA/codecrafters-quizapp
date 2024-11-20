@@ -135,3 +135,31 @@ main {
     width: 48px;
     cursor: pointer;
 }
+
+#student-dropdown {
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    width: 80%;
+    max-width: 400px;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    border: 2px solid #a262e3;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#student-dropdown:hover {
+    border-color: #764abc;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+#student-dropdown option {
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    padding: 5px;
+}
