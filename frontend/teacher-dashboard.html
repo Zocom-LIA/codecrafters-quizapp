@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <link rel="stylesheet" href="teacher-dashboard.css">
+    <title>Teacher Dashboard</title>
+</head>
+
+<body>
+    <header class="header">
+        <a id="link-home" href="index.html">
+            <img src="images/home-icon.png" alt="Home" class="home-icon">
+        </a>
+        <h1>Teacher Dashboard</h1>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="dashboard-tile" id="view-results">
+            <img src="images/view-results-icon.png" alt="View Results" class="tile-icon">
+            <h2>View Student Results</h2>
+        </div>
+        <div class="dashboard-tile" id="edit-quizzes">
+            <img src="images/edit-quizzes-icon.png" alt="Edit Quizzes" class="tile-icon">
+            <h2>Edit Quizzes</h2>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Quiz App &copy; 2024</p>
+    </footer>
+
+    <script>
+        document.getElementById('view-results').addEventListener('click', () => {
+            window.location.href = 'user-attempts.html';
+        });
+
+        document.getElementById('edit-quizzes').addEventListener('click', () => {
+            window.location.href = 'edit-quizzes.html';
+        });
+    </script>
+</body>
+
+</html>

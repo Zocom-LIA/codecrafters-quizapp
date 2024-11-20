@@ -53,7 +53,7 @@ async function handleLogin() {
         if (user.role === 'student') {
             window.location.href = 'homepage.html';
         } else if (user.role === 'teacher') {
-            window.location.href = 'user-attempts.html'; // Define the teacher page later
+            window.location.href = 'teacher-dashboard.html'; // Define the teacher page later
         } else {
             errorMessage.textContent = 'Unknown role. Please contact support.';
             errorMessage.style.display = 'block';

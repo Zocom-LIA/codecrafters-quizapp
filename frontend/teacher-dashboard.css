@@ -1,0 +1,79 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.header {
+    background-color: #764abc;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.home-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 50px auto;
+    max-width: 600px;
+    padding: 20px;
+}
+
+/* Tile Styles */
+.dashboard-tile {
+    width: 100%;
+    max-width: 400px;
+    background-color: white;
+    border: 2px solid #a262e3;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.dashboard-tile:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-tile h2 {
+    margin: 20px 0 10px;
+    font-size: 20px;
+    color: #333;
+}
+
+.tile-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+/* Footer */
+.footer {
+    background-color: #764abc;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
