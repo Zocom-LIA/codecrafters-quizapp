@@ -1,5 +1,5 @@
 :root {
-    --header: #a262e3;
+    --header: #764abc;
 }
 
 html,
@@ -25,6 +25,27 @@ body {
     justify-content: center;
     position: relative;
     padding: 20px;
+}
+
+.home-icon-link {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.home-icon-link:hover {
+    transform: scale(1.1);
+}
+
+.home-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 .python-question img {
@@ -174,7 +195,7 @@ body {
     background-color: #91DEC2;
     border-color: #91DEC2;
     font-weight: bold;
-    color: white;
+    color: black;
 }
 
 /* Styling for Incorrect Answer */
@@ -182,7 +203,7 @@ body {
     background-color: #F0C3C3;
     border-color: #F0C3C3;
     font-weight: bold;
-    color: white;
+    color: black;
 }
 
 /* Styling for Disabled Buttons (After Submission) */
@@ -195,7 +216,7 @@ body {
 
 /* Submit and Next Button Styling */
 #btn-dynamic {
-    background-color: #a262e3;
+    background-color: #764abc;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -206,7 +227,7 @@ body {
 }
 
 #btn-dynamic:hover {
-    background-color: #7b52a3;
+    background-color: #a262e3;
 }
 
 /* General Styling for Containers */

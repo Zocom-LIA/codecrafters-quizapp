@@ -28,18 +28,19 @@ body {
 
 .dashboard-container {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
     gap: 20px;
+    /* Add space between tiles */
     margin: 50px auto;
-    max-width: 600px;
     padding: 20px;
 }
 
 /* Tile Styles */
 .dashboard-tile {
-    width: 100%;
-    max-width: 400px;
+    width: 200px;
+    height: 200px;
+    /* Square shape */
     background-color: white;
     border: 2px solid #a262e3;
     border-radius: 10px;
@@ -48,6 +49,10 @@ body {
     padding: 20px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .dashboard-tile:hover {
@@ -56,9 +61,10 @@ body {
 }
 
 .dashboard-tile h2 {
-    margin: 20px 0 10px;
-    font-size: 20px;
+    margin: 10px 0 0;
+    font-size: 16px;
     color: #333;
+    text-align: center;
 }
 
 .tile-icon {

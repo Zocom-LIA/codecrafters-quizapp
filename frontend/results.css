@@ -1,10 +1,10 @@
 :root {
-    --header: #a262e3;
+    --header: #764abc;
 }
 
 html,
 body {
-    background-color: #a262e3;
+    background-color: #764abc;
     height: 100%;
     font-family: 'Poppins';
     font-size: 22px;
@@ -65,4 +65,13 @@ body {
 
 h1 {
     text-align: center
+}
+
+.footer {
+    background-color: #764abc;
+    color: white;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }
