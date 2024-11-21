@@ -27,6 +27,8 @@ async function init() {
         await handleResultsPage();
     } else if (pathname.includes('user-attempts.html')) {
         await handleUserAttemptsPage();
+    } else if (pathname.includes('quizzes-list.html')) {
+        await handquizzeslistPage();
     }
 }
 
@@ -608,6 +610,76 @@ function displayAnswers(answers) {
         modal.style.display = 'none';
     });
 }
+
+//
+// --- QUIZZES LIST LOGIC ---
+//
+
+async function handquizzeslistPage() {
+    const userId = sessionStorage.getItem('userId');
+    const role = sessionStorage.getItem('userRole'); // Ensure the role is fetched correctly
+    const errorMessage = document.getElementById('div-error-message'); // Define errorMessage dynamically
+
+    try {
+        if (role === 'teacher') {
+            const quizzes = await getQuizzes();
+            displayEditQuizzes(quizzes['quizzes']);
+        } else {
+            errorMessage.textContent = 'You must have a teacher role. Please contact support.';
+            errorMessage.style.color = 'red';
+            document.body.prepend(errorMessage); // Add error message to the body
+        }
+    } catch (error) {
+        console.error('Error loading quizzes:', error);
+    }
+}
+
+function displayEditQuizzes(quizzes) {
+    const quizzesContainer = document.getElementById('quizzes-container-list');
+    quizzesContainer.innerHTML = ''; // Clear existing content
+
+    const createQuizButton = document.getElementById('create-quiz-button');
+    if (createQuizButton) {
+        createQuizButton.addEventListener('click', () => {
+            window.location.href = 'create-quiz.html';
+        });
+    }
+
+    if (!quizzes || quizzes.length === 0) {
+        const noQuizzesMessage = document.createElement('p');
+        noQuizzesMessage.textContent = 'No quizzes available.';
+        quizzesContainer.appendChild(noQuizzesMessage);
+        return;
+    }
+
+    quizzes.forEach((quiz) => {
+        const quizEntry = document.createElement('div');
+        quizEntry.className = 'quiz-entry';
+
+        const quizTitle = document.createElement('h3');
+        quizTitle.textContent = quiz.title;
+
+        const quizDescription = document.createElement('p');
+        quizDescription.textContent = quiz.description;
+
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit Quiz';
+        editButton.addEventListener('click', () => {
+            storeSelectedQuiz(quiz.quizId);
+            window.location.href = 'edit-quiz.html';
+        });
+
+        quizEntry.appendChild(quizTitle);
+        quizEntry.appendChild(quizDescription);
+        quizEntry.appendChild(editButton);
+
+        quizzesContainer.appendChild(quizEntry);
+    });
+}
+
+//
+// --- HELPER FUNCTIONS ---
+//
 
 function formatDateTime(dateString) {
     const date = new Date(dateString);
