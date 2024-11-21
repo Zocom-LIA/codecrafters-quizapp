@@ -25,14 +25,16 @@ def create_quiz(event, context):
             'PK': f"QUIZ#{quiz_id}",
             'SK': 'METADATA',
             'title': data['title'],
-            'description': data['description']
+            'description': data['description'],
+            'visible': True  # Add visible attribute
         }
     )
 
     created_quiz = {
         'quizId': quiz_id,
         'title': data['title'],
-        'description': data['description']
+        'description': data['description'],
+        'visible': True
     }
 
     return {
@@ -88,6 +90,7 @@ def get_all_quizzes(event, context):
     response = table.scan(
         FilterExpression=Attr("SK").eq("METADATA")
         & Attr("PK").contains("QUIZ#")
+        & Attr("visible").eq(True)  # Include only visible quizzes
     )
 
     items = response.get('Items', [])
@@ -159,6 +162,30 @@ def update_quiz(event, context):
             'message': 'Quiz updated successfully',
             'quiz': updated_quiz
         })
+    }
+
+
+def update_quiz_visibility(event, context):
+    quiz_id = event['pathParameters']['quizId']
+    data = json.loads(event['body'])
+
+    visible = data.get('visible', True)  # Default to true if not provided
+
+    # Update the visibility attribute
+    table.update_item(
+        Key={
+            'PK': f"QUIZ#{quiz_id}",
+            'SK': 'METADATA'
+        },
+        UpdateExpression="SET visible = :visible",
+        ExpressionAttributeValues={
+            ':visible': visible
+        }
+    )
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'message': f'Quiz visibility updated to {visible}'})
     }
 
 

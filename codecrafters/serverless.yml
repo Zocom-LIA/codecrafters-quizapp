@@ -189,6 +189,13 @@ functions:
           path: quiz/{quizId}
           method: put
 
+  update_quiz_visibility:
+    handler: quiz.update_quiz_visibility
+    events:
+      - http:
+          path: quiz/{quizId}/visibility
+          method: patch
+
   deleteQuiz:
     handler: quiz.delete_quiz
     events:
