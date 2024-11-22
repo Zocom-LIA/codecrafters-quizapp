@@ -29,6 +29,21 @@ async function init() {
         await handleUserAttemptsPage();
     } else if (pathname.includes('quizzes-list.html')) {
         await handquizzeslistPage();
+    } else if (pathname.includes('create-edit-quiz.html')) {
+        const selectedQuizId = loadSelectedQuizId();
+        console.log(`Selected quiz id: ${selectedQuizId}`)
+        if (selectedQuizId != '') {
+            console.log('Edit quiz selected');
+            loadQuiz(selectedQuizId);
+            loadQuestions(selectedQuizId);
+        } else {
+            console.log('Create quiz selected');
+            document.getElementById('page-title').textContent = 'Create Quiz';
+        }
+        document.getElementById('add-question-button').addEventListener('click', addQuestion);
+        document.getElementById('save-quiz-button').addEventListener('click', saveQuiz);
+        addDeleteQuizListener();
+
     }
 }
 
@@ -641,7 +656,8 @@ function displayEditQuizzes(quizzes) {
     const createQuizButton = document.getElementById('create-quiz-button');
     if (createQuizButton) {
         createQuizButton.addEventListener('click', () => {
-            window.location.href = 'create-quiz.html';
+            storeSelectedQuiz('');
+            window.location.href = 'create-edit-quiz.html';
         });
     }
 
@@ -666,7 +682,7 @@ function displayEditQuizzes(quizzes) {
         editButton.textContent = 'Edit Quiz';
         editButton.addEventListener('click', () => {
             storeSelectedQuiz(quiz.quizId);
-            window.location.href = 'edit-quiz.html';
+            window.location.href = 'create-edit-quiz.html';
         });
 
         quizEntry.appendChild(quizTitle);
@@ -674,6 +690,188 @@ function displayEditQuizzes(quizzes) {
         quizEntry.appendChild(editButton);
 
         quizzesContainer.appendChild(quizEntry);
+    });
+}
+
+//
+// --- QUIZZ CREATE EDIT LOGIC ---
+//
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+
+    const questionDiv = document.createElement('div');
+    questionDiv.classList.add('question-entry');
+
+    questionDiv.innerHTML = `
+        <label>Question Text:</label>
+        <input type="text" placeholder="Enter question text" required>
+        
+        <div class="options-container">
+            ${[1, 2, 3, 4].map(
+        (i) =>
+            `<div>
+                        <input type="radio" name="correct-option-${Date.now()}" value="${i}">
+                        <input type="text" placeholder="Option ${i}" required>
+                    </div>`
+    ).join('')}
+        </div>
+        <button type="button" class="remove-question-button">Remove Question</button>
+    `;
+
+    questionDiv.querySelector('.remove-question-button').addEventListener('click', () => {
+        questionDiv.remove();
+    });
+
+    container.appendChild(questionDiv);
+}
+
+async function loadQuiz(quizId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}`);
+        if (!response.ok) throw new Error('Failed to fetch quiz data');
+
+        const quiz = await response.json();
+        document.getElementById('quiz-title').value = quiz.title;
+        document.getElementById('quiz-description').value = quiz.description;
+    } catch (error) {
+        console.error('Error loading quiz:', error);
+    }
+}
+
+async function loadQuestions(quizId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/questions`);
+        if (!response.ok) throw new Error('Failed to fetch questions');
+
+        const { questions } = await response.json();
+        questions.forEach((question) => {
+            addQuestion();
+            const questionDiv = document.querySelectorAll('.question-entry');
+            const lastQuestion = questionDiv[questionDiv.length - 1];
+
+            lastQuestion.querySelector('input[placeholder="Enter question text"]').value = question.questionText;
+            question.options.forEach((option, index) => {
+                lastQuestion.querySelectorAll('input[type="text"]')[index].value = option;
+            });
+        });
+    } catch (error) {
+        console.error('Error loading questions:', error);
+    }
+}
+
+async function saveQuiz() {
+    const quizId = sessionStorage.getItem('selectedQuizId');
+    const title = document.getElementById('quiz-title').value.trim();
+    const description = document.getElementById('quiz-description').value.trim();
+
+    if (!title || !description) {
+        alert('Quiz title and description are required.');
+        return;
+    }
+
+    try {
+        const quizPayload = { title, description };
+        const quizMethod = quizId ? 'PUT' : 'POST';
+        const quizEndpoint = quizId ? `${baseUrl}/${stage}/quiz/${quizId}` : `${baseUrl}/${stage}/quiz`;
+
+        // Save or update the quiz
+        const quizResponse = await fetch(quizEndpoint, {
+            method: quizMethod,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(quizPayload),
+        });
+
+        if (!quizResponse.ok) throw new Error('Failed to save quiz');
+        const quizData = await quizResponse.json();
+        const currentQuizId = quizId || quizData.quizId;
+
+        // Save questions
+        const { successCount, errorCount } = await saveQuestions(currentQuizId);
+
+        alert(`Quiz saved successfully! ${successCount} questions saved. ${errorCount} errors.`);
+        // Uncomment to navigate back to the dashboard after saving
+        // window.location.href = 'teacher-dashboard.html';
+    } catch (error) {
+        console.error('Error saving quiz:', error);
+        alert('Error saving quiz. Please try again.');
+    }
+}
+
+async function saveQuestions(quizId) {
+    const questionEntries = Array.from(document.querySelectorAll('.question-entry'));
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const [index, entry] of questionEntries.entries()) {
+        const questionText = entry.querySelector('input[placeholder="Enter question text"]').value.trim();
+        const options = Array.from(entry.querySelectorAll('.options-container input[type="text"]')).map(
+            (input) => input.value.trim()
+        );
+        const correctOptionIndex = Array.from(entry.querySelectorAll('.options-container input[type="radio"]')).findIndex(
+            (radio) => radio.checked
+        );
+
+        if (!questionText || options.some((opt) => !opt) || correctOptionIndex === -1) {
+            alert(`Question ${index + 1} has incomplete fields. Please fill out all fields.`);
+            errorCount++;
+            continue;
+        }
+
+        const questionPayload = {
+            questionText,
+            options,
+            correctAnswer: options[correctOptionIndex],
+        };
+
+        try {
+            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/question`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(questionPayload),
+            });
+
+            if (!response.ok) throw new Error(`Failed to save question ${index + 1}`);
+            successCount++;
+        } catch (error) {
+            console.error(`Error saving question ${index + 1}:`, error);
+            errorCount++;
+        }
+    }
+
+    return { successCount, errorCount };
+}
+
+function addDeleteQuizListener() {
+    const deleteQuizButton = document.getElementById('delete-quiz-button');
+
+    deleteQuizButton.addEventListener('click', async () => {
+        const quizId = sessionStorage.getItem('selectedQuizId');
+
+        if (!quizId) {
+            alert('No quiz selected.');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this quiz? This action will hide the quiz from the interface.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ visible: false }),
+            });
+
+            if (!response.ok) throw new Error('Failed to delete quiz');
+
+            alert('Quiz successfully deleted (hidden from the interface).');
+            window.location.href = 'teacher-dashboard.html';
+        } catch (error) {
+            console.error('Error deleting quiz:', error);
+            alert('Error deleting quiz. Please try again.');
+        }
     });
 }
 

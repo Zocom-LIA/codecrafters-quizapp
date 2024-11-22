@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="create-edit-quiz.css">
+    <title>Create or Edit Quiz</title>
+</head>
+
+<body>
+    <header>
+        <h1 id="page-title">Create or Edit Quiz</h1>
+        <a href="homepage.html">
+            <img src="./images/home.png" alt="Home" class="home-logo">
+        </a>
+    </header>
+
+    <main>
+        <div class="quiz-details">
+            <label for="quiz-title">Quiz Title:</label>
+            <input type="text" id="quiz-title" placeholder="Enter quiz title" required>
+
+            <label for="quiz-description">Quiz Description:</label>
+            <textarea id="quiz-description" placeholder="Enter quiz description"></textarea>
+        </div>
+
+        <div id="questions-container">
+            <h2>Questions</h2>
+        </div>
+        <button id="add-question-button">Add Question</button>
+        <button id="save-quiz-button">Save Quiz</button>
+    </main>
+
+    <footer>
+        <p>Quiz App</p>
+    </footer>
+
+    <script src="create-edit-quiz.js"></script>
+</body>
+
+</html>
