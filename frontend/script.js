@@ -1,322 +1,900 @@
-// Add a listener to the init function, so it runs when the DOM is fully loaded
-// This ensures that the API call and displaying of quizzes happens as soon as possible
 document.addEventListener('DOMContentLoaded', init);
 
+let baseUrl, stage;
+
+if (window.location.hostname === '127.0.0.1') {
+    baseUrl = 'http://localhost:3000'; // Local base URL
+    stage = 'local';
+} else if (window.location.hostname.includes('dev')) {
+    baseUrl = 'https://lx31hr5mn2.execute-api.eu-north-1.amazonaws.com'; // Development base URL
+    stage = 'dev';
+}
+
+// Initialize the app based on the current page
 async function init() {
-    // Get the current URL or pathname
     const pathname = window.location.pathname;
 
-    // In the homepage, the quizzes are retrieved by making an API call, they're stored in session and the quizz links (tiles) are displayed dynamically.
-    if (pathname.includes('homepage.html')) {
-        try {
-            let quizzes;
-            quizzes = await getQuizzes();
-            storeQuizzes(quizzes);
-            displayQuizzes(quizzes['quizzes']);
-        } catch (error) {
-            console.error('Error initializing the app:', error);
-        }
+    if (pathname.includes('index.html')) {
+        const loginButton = document.getElementById('login-button');
+        loginButton.addEventListener('click', handleLogin);
+    } else if (pathname.includes('homepage.html')) {
+        await handleHomepage();
     } else if (pathname.includes('description.html')) {
-        displayQuizDescription();
-        addStartQuizListener();     // This makes another API call to retireve all questions for the selected quiz
+        await handleQuizDescription();
     } else if (pathname.includes('question.html')) {
-        displayQuestion();
-        evaluateAnswers();
+        await handleQuestionPage();
+    } else if (pathname.includes('results.html')) {
+        await handleResultsPage();
+    } else if (pathname.includes('user-attempts.html')) {
+        await handleUserAttemptsPage();
+    } else if (pathname.includes('quizzes-list.html')) {
+        await handquizzeslistPage();
+    } else if (pathname.includes('create-edit-quiz.html')) {
+        const selectedQuizId = loadSelectedQuizId();
+        console.log(`Selected quiz id: ${selectedQuizId}`)
+        if (selectedQuizId != '') {
+            console.log('Edit quiz selected');
+            loadQuiz(selectedQuizId);
+            loadQuestions(selectedQuizId);
+        } else {
+            console.log('Create quiz selected');
+            document.getElementById('page-title').textContent = 'Create Quiz';
+        }
+        document.getElementById('add-question-button').addEventListener('click', addQuestion);
+        document.getElementById('save-quiz-button').addEventListener('click', saveQuiz);
+        addDeleteQuizListener();
+
     }
 }
 
-// API call to getAllQuizzes
+//
+// --- INDEX PAGE LOGIC ---
+//
+
+async function handleLogin() {
+    const usernameField = document.getElementById('username-field');
+    const errorMessage = document.getElementById('error-message');
+    const username = usernameField.value.trim();
+
+    if (!username) {
+        errorMessage.textContent = 'Please enter a username.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    try {
+        const user = await validateUsername(username);
+        sessionStorage.setItem('userId', user.userId); // Save userId in session storage
+        sessionStorage.setItem('userRole', user.role); // Save role for future use
+
+        if (user.role === 'student') {
+            window.location.href = 'homepage.html';
+        } else if (user.role === 'teacher') {
+            window.location.href = 'teacher-dashboard.html'; // Define the teacher page later
+        } else {
+            errorMessage.textContent = 'Unknown role. Please contact support.';
+            errorMessage.style.display = 'block';
+        }
+    } catch (error) {
+        errorMessage.textContent = 'Invalid username. Please try again.';
+        errorMessage.style.display = 'block';
+        console.error(`Error validating username`, error);
+    }
+}
+
+async function validateUsername(username) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/users/username/${username}`);
+        if (!response.ok) throw new Error('User not found');
+        return await response.json(); // Assume the response contains user data including the role
+    } catch (error) {
+        console.error('Error validating username:', error);
+        throw error;
+    }
+}
+
+//
+// --- HOMEPAGE LOGIC ---
+//
+
+async function handleHomepage() {
+    try {
+        const quizzes = await getQuizzes();
+        displayQuizzes(quizzes['quizzes']);
+    } catch (error) {
+        console.error('Error loading quizzes:', error);
+    }
+}
+
 async function getQuizzes() {
     try {
-        const response = await fetch('http://localhost:3000/dev/quiz');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        return data;
+        const response = await fetch(`${baseUrl}/${stage}/quiz`);
+        if (!response.ok) throw new Error('Failed to fetch quizzes');
+        return await response.json();
     } catch (error) {
         console.error('Error fetching quizzes:', error);
         throw error;
     }
 }
 
-// API call to getQuestionsByQuiz
-async function getQuestions(quizId) {
-    try {
-        const response = await fetch(`http://localhost:3000/dev/quiz/${quizId}/questions`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error fetching questions:', error);
-        throw error;
-    }
+function displayQuizzes(quizzes) {
+    const quizzesContainer = document.getElementById('quizzes-container');
+    quizzesContainer.innerHTML = ''; // Clear existing content
+
+    quizzes.forEach((quiz) => {
+        const quizOption = document.createElement('div');
+        quizOption.className = 'quiz-option';
+
+        const quizImage = document.createElement('img');
+        // quizImage.src = `./images/${quiz.title.toLowerCase()}.png`;
+        quizImage.src = `./images/logo.png`;
+        quizImage.alt = quiz.title;
+
+        const quizTitle = document.createElement('a');
+        quizTitle.href = 'description.html';
+        quizTitle.dataset.quizId = quiz.quizId;
+        quizTitle.textContent = quiz.title;
+
+        quizTitle.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default anchor behavior
+            storeSelectedQuiz(quiz.quizId); // Store the selected quiz ID
+            window.location.href = 'description.html'; // Navigate to description page
+        });
+
+        quizOption.appendChild(quizImage);
+        quizOption.appendChild(quizTitle);
+        quizzesContainer.appendChild(quizOption);
+    });
 }
 
-// Store quizzes to session storage
-function storeQuizzes(quizzes) {
-    sessionStorage.setItem('quizzes', JSON.stringify(quizzes['quizzes']));
-}
-
-// Retrieve the quizzes from sessionStorage and parse it if it exists
-function loadQuizzes() {
-    const storedQuizzes = sessionStorage.getItem('quizzes');
-
-    if (storedQuizzes) {
-        try {
-            return JSON.parse(storedQuizzes);
-        } catch (error) {
-            console.error("Error parsing JSON from sessionStorage", error);
-            return null;
-        }
-    } else {
-        console.warn("No quiz data found in sessionStorage");
-        return null;
-    }
-}
-
-// Store the user selected quiz for retrieving it in the description and question pages
 function storeSelectedQuiz(selectedQuizId) {
     sessionStorage.setItem('selectedQuizId', selectedQuizId);
+}
+
+//
+// --- QUIZ DESCRIPTION LOGIC ---
+//
+
+async function handleQuizDescription() {
+    displayQuizDescription();
+
+    const startQuizButton = document.getElementById('start-quiz');
+    startQuizButton.addEventListener('click', async () => {
+        const selectedQuizId = loadSelectedQuizId();
+        try {
+            const userAttempt = await startQuiz(selectedQuizId);
+            storeUserAttempt(userAttempt.userAttemptId);
+            window.location.href = 'question.html';
+        } catch (error) {
+            console.error('Error starting quiz:', error);
+        }
+    });
 }
 
 function loadSelectedQuizId() {
     return sessionStorage.getItem('selectedQuizId');
 }
 
-function loadQuestions() {
-    const storedQuestions = sessionStorage.getItem('questions');
+async function startQuiz(quizId) {
+    const userId = sessionStorage.getItem('userId'); // Retrieve userId from session storage
+    if (!userId) {
+        throw new Error('User not logged in');
+    }
 
-    if (storedQuestions) {
-        try {
-            return JSON.parse(storedQuestions);
-        } catch (error) {
-            console.error("Error parsing JSON from sessionStorage", error);
-            return null;
-        }
-    } else {
-        console.warn("No question data found in sessionStorage");
-        return null;
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quizId, userId }),
+        });
+        if (!response.ok) throw new Error('Failed to start quiz');
+        return await response.json();
+    } catch (error) {
+        console.error('Error starting quiz:', error);
+        throw error;
     }
 }
 
-function loadSelectedQuizDescription() {
+function storeUserAttempt(userAttemptId) {
+    sessionStorage.setItem('userAttemptId', userAttemptId);
+}
+
+async function displayQuizDescription() {
     const selectedQuizId = loadSelectedQuizId();
-    const quizzes = loadQuizzes();
-
-    // Check for cases where the API hasn't yet returned the data
-    if (!selectedQuizId || !quizzes) {
-        return "Data not yet available.";
+    if (!selectedQuizId) {
+        displayErrorMessage('No quiz selected.');
+        return;
     }
 
-    const quiz = quizzes.find(quiz => quiz.quizId === selectedQuizId);
-    return quiz ? quiz.description : "Quiz not found.";
+    try {
+        const quiz = await fetchQuizById(selectedQuizId);
+        const descriptionBox = document.getElementById('description-box');
+        descriptionBox.textContent = quiz.description || 'Description not available.';
+    } catch (error) {
+        console.error('Error fetching quiz:', error);
+        displayErrorMessage('Quiz not found.');
+    }
 }
 
-// Function to display the quizzes in the quiz-options element
-function displayQuizzes(quizzes) {
-    // This is for testing purposes, we should instead use a map
-    // e.g. quizImagesMap={ 'python' : 'images /python. Png' }
-    const imagePaths = ["images/c++.png", "images/python.png", "images/java.png"];
-    const imageAltTexts = ["C++", "Python", "Java"];
+async function fetchQuizById(quizId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}`);
+        if (!response.ok) throw new Error('Quiz not found');
+        return await response.json(); // Assuming the response includes the quiz object
+    } catch (error) {
+        console.error('Error fetching quiz by ID:', error);
+        throw error;
+    }
+}
 
-    // Get the parent container element (quiz-options), which will include all the dynamically created quiz links
-    const quizzesContainer = document.getElementById('quizzes-container');
-    const quizDescriptionDestination = 'description.html';
+function displayErrorMessage(message) {
+    const descriptionBox = document.getElementById('description-box');
+    descriptionBox.textContent = message;
+}
 
-    // Create and append 3 new div elements in a loop
-    // This is a temporary limit until we implement pagination/arrows or another approach
-    // We should then change the for loop to a for...of, to improve code readability
-    for (let i = 0; i < quizzes.length; i++) {
-        if (i < 3) {
-            // Element for the quiz option (tile that includes image and title)
-            const quizOption = document.createElement('div');
+//
+// --- QUESTION PAGE LOGIC ---
+//
 
-            let quizImage = document.createElement('img');
+function setupNextButtonListener() {
+    const nextButton = document.getElementById('btn-dynamic');
+    nextButton.addEventListener('click', async () => {
+        try {
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const userAttemptId = sessionStorage.getItem('userAttemptId');
 
-            // For testing purposes (for loopoing between the already available images)
-            quizImage.src = imagePaths[i % 3];
-            quizImage.alt = imageAltTexts[i % 3];
+            const response = await moveToNextQuestion(userId, selectedQuizId, userAttemptId);
 
-            var quizTitle = document.createElement('a');
-            quizTitle.setAttribute('href', quizDescriptionDestination);
-            quizTitle.dataset.quizId = quizzes[i]['quizId'];
-            quizTitle.innerText = quizzes[i]['title'];
+            if (response.questionId) {
+                loadAndDisplayQuestion(response); // Load the next question
+            } else {
+                window.location.href = 'results.html'; // No more questions
+            }
+        } catch (error) {
+            console.error('Error moving to the next question:', error);
+        }
+    });
+}
 
-            quizTitle.addEventListener('click', (event) => {
-                const selectedQuizId = event.target.dataset.quizId;
-                storeSelectedQuiz(selectedQuizId);
+async function handleQuestionPage() {
+    // Load the first question
+    await loadAndDisplayQuestion();
+
+    // Set up the dynamic button behavior
+    const dynamicButton = document.getElementById('btn-dynamic');
+    dynamicButton.addEventListener('click', async () => {
+        const mode = dynamicButton.dataset.mode;
+
+        if (mode === 'submit') {
+            await handleSubmit();
+        } else if (mode === 'next') {
+            await handleNext();
+        }
+    });
+}
+
+async function handleSubmit() {
+    const selectedOption = document.querySelector('.btn-option.selected');
+    if (!selectedOption) {
+        alert('Please select an answer');
+        return;
+    }
+
+    const userAnswer = selectedOption.dataset.option;
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+    const userAttemptId = sessionStorage.getItem('userAttemptId');
+    const questionId = sessionStorage.getItem('currentQuestionId'); // Assume this is stored when a question is displayed
+
+    try {
+        const evaluation = await submitAnswer(userId, selectedQuizId, userAttemptId, questionId, userAnswer);
+        displayEvaluation(evaluation, userAttemptId);
+
+        // Change button state to "Next"
+        const dynamicButton = document.getElementById('btn-dynamic');
+        dynamicButton.textContent = 'Next';
+        dynamicButton.dataset.mode = 'next';
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+    }
+}
+
+async function handleNext() {
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+    const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+    try {
+        const response = await moveToNextQuestion(userId, selectedQuizId, userAttemptId);
+
+        if (response.questionId) {
+            loadAndDisplayQuestion(response);
+
+            // Change button state back to "Submit"
+            const dynamicButton = document.getElementById('btn-dynamic');
+            dynamicButton.textContent = 'Submit';
+            dynamicButton.dataset.mode = 'submit';
+        } else {
+            window.location.href = 'results.html'; // No more questions
+        }
+    } catch (error) {
+        console.error('Error moving to next question:', error);
+    }
+}
+
+
+async function loadAndDisplayQuestion(questionData = null) {
+    if (!questionData) {
+        // Fetch the current question if no data is passed (initial page load)
+        try {
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+            questionData = await getCurrentQuestion(userId, selectedQuizId, userAttemptId);
+        } catch (error) {
+            console.error('Error loading current question:', error);
+            return;
+        }
+    }
+
+    // Display the question
+    displayQuestion(questionData);
+}
+
+
+async function getCurrentQuestion(userId, selectedQuizId, userAttemptId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/${userId}/${selectedQuizId}/${userAttemptId}`);
+        if (!response.ok) throw new Error('Failed to fetch current question');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching current question:', error);
+        throw error;
+    }
+}
+
+function displayQuestion(questionData) {
+    const questionText = document.getElementById('heading-question-text');
+    questionText.textContent = questionData.questionText;
+
+    const questionNumber = document.getElementById('heading-question-number');
+    questionNumber.textContent = `Question ${questionData.currentNumber} of ${questionData.totalQuestions}`;
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = ''; // Clear existing options
+
+    questionData.options.forEach((option) => {
+        const button = document.createElement('button');
+        button.className = 'btn-option';
+        button.textContent = option;
+        button.dataset.option = option;
+
+        button.addEventListener('click', (event) => {
+            document.querySelectorAll('.btn-option').forEach((btn) => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        });
+
+        optionsContainer.appendChild(button);
+    });
+
+    // Store the current question ID
+    sessionStorage.setItem('currentQuestionId', questionData.questionId);
+}
+
+function setupSubmitButton(userAttemptId, questionId) {
+    const submitButton = document.getElementById('btn-dynamic');
+    submitButton.addEventListener('click', async () => {
+        const selectedOption = document.querySelector('.btn-option.selected');
+        if (!selectedOption) {
+            alert('Please select an answer');
+            return;
+        }
+
+        const userAnswer = selectedOption.dataset.option;
+        try {
+            const userId = sessionStorage.getItem('userId');
+            const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+            const evaluation = await submitAnswer(userId, selectedQuizId, userAttemptId, questionId, userAnswer);
+            displayEvaluation(evaluation, userAttemptId);
+        } catch (error) {
+            console.error('Error submitting answer:', error);
+        }
+    });
+}
+
+async function submitAnswer(userId, quizId, attemptId, questionId, userAnswer) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/answers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, quizId, attemptId, questionId, userAnswer }),
+        });
+        if (!response.ok) throw new Error('Failed to submit answer');
+        return await response.json();
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+        throw error;
+    }
+}
+
+function displayEvaluation(evaluation, userAttemptId) {
+    const correctAnswers = evaluation.correctAnswers; // Backend should return this in the response
+    document.querySelectorAll('.btn-option').forEach((button) => {
+        if (correctAnswers.includes(button.textContent)) {
+            button.classList.add('correct');
+        } else if (button.classList.contains('selected')) {
+            button.classList.add('incorrect');
+        }
+    });
+
+    const nextButton = document.getElementById('btn-dynamic');
+    nextButton.style.display = 'block';
+
+    // "Next" button is already set up, no need to duplicate listeners
+}
+
+
+async function moveToNextQuestion(userId, quizId, attemptId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/progress/next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, quizId, attemptId }),
+        });
+        if (!response.ok) throw new Error('Failed to move to next question');
+        return await response.json();
+    } catch (error) {
+        console.error('Error moving to next question:', error);
+        throw error;
+    }
+}
+
+//
+// --- QUIZ RESULT PAGE LOGIC ---
+//
+
+async function handleResultsPage() {
+    const userId = sessionStorage.getItem('userId');
+    const selectedQuizId = sessionStorage.getItem('selectedQuizId');
+    const userAttemptId = sessionStorage.getItem('userAttemptId');
+
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}/${selectedQuizId}/${userAttemptId}`);
+        if (!response.ok) throw new Error('Failed to fetch user attempt details');
+
+        const { score, timeTaken } = await response.json();
+
+        displayResults(score, timeTaken);
+    } catch (error) {
+        console.error('Error loading results:', error);
+    }
+}
+
+function displayResults(score, timeTaken) {
+    const scoreElement = document.getElementById('score');
+    const timeElement = document.getElementById('time-taken');
+
+    scoreElement.textContent = `Score: ${score}`;
+    if (timeTaken) {
+        timeElement.textContent = `Time Taken: ${timeTaken.minutes} minutes and ${timeTaken.seconds} seconds`;
+    } else {
+        timeElement.textContent = 'Time Taken: Not available';
+    }
+}
+
+//
+// --- USER ATTEMPTS PAGE LOGIC ---
+//
+
+async function handleUserAttemptsPage() {
+    updateHomeLink();
+
+    const userId = sessionStorage.getItem('userId');
+    const userRole = sessionStorage.getItem('userRole'); // Assume role is stored in session
+
+    try {
+        if (userRole === 'teacher') {
+            await setupStudentDropdown();
+        } else if (userRole === 'student') {
+            const attempts = await fetchAttempts(userId);
+            displayAttempts(attempts);
+        }
+    } catch (error) {
+        console.error('Error loading user attempts:', error);
+    }
+}
+
+async function setupStudentDropdown() {
+    const dropdown = document.getElementById('student-dropdown');
+    dropdown.style.display = 'block'; // Ensure the dropdown is visible for teachers
+
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/user/students`);
+        if (!response.ok) throw new Error('Failed to fetch student list');
+
+        const { students } = await response.json();
+
+        // Populate dropdown with student names
+        dropdown.innerHTML = `
+            <option value="" disabled selected>Select a student</option>
+            ${students.map((student) => `<option value="${student.userId}">${student.userName}</option>`).join('')}
+        `;
+
+        // Add event listener to fetch attempts for selected student
+        dropdown.addEventListener('change', async (event) => {
+            const userId = event.target.value; // Selected student's userId
+            const attempts = await fetchAttempts(userId);
+            displayAttempts(attempts);
+        });
+    } catch (error) {
+        console.error('Error fetching student list:', error);
+    }
+}
+
+async function displayAttempts(attempts) {
+    const container = document.getElementById('attempts-container');
+    container.innerHTML = '';
+
+    const promises = attempts.map(async (attempt) => {
+        const quiz = await fetchQuizById(attempt.quizId);
+
+        const attemptDiv = document.createElement('div');
+        attemptDiv.classList.add('attempt-entry');
+
+        attemptDiv.innerHTML = `
+            <h3>${quiz.title}</h3>
+            <p>Date Started: ${formatDateTime(attempt.dateStarted)}</p>
+            <p>Score: ${attempt.score}</p>
+            <p>Time Taken: ${attempt.timeTaken.minutes} minutes ${attempt.timeTaken.seconds} seconds</p>
+            <button class="view-answers" data-attempt-id="${attempt.attemptId}">View Answers</button>
+        `;
+
+        container.appendChild(attemptDiv);
+    });
+    await Promise.all(promises);
+    setupAnswerButtons();
+}
+
+async function fetchAttempts(userId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/attempts/${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch attempts');
+        const { attempts } = await response.json();
+        return attempts;
+    } catch (error) {
+        console.error('Error fetching attempts:', error);
+        return [];
+    }
+}
+
+function setupAnswerButtons() {
+    const buttons = document.querySelectorAll('.view-answers');
+    buttons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            const attemptId = event.target.dataset.attemptId;
+            await showAnswersModal(attemptId);
+        });
+    });
+}
+
+async function showAnswersModal(attemptId) {
+    try {
+        // Fetch user attempt details to get the associated quizId
+        const userAttemptResponse = await fetch(`${baseUrl}/${stage}/attempts/details/${attemptId}`);
+        if (!userAttemptResponse.ok) throw new Error('Failed to fetch user attempt details');
+        const userAttempt = await userAttemptResponse.json();
+
+        const quizId = userAttempt.quizId;
+        const userId = userAttempt.userId;
+
+        // Fetch answers for the attempt
+        const response = await fetch(`${baseUrl}/${stage}/answers/${userId}/${quizId}/${attemptId}`);
+        if (!response.ok) throw new Error('Failed to fetch answers');
+
+        const { answers } = await response.json();
+
+        // Display the answers in the modal
+        displayAnswers(answers);
+    } catch (error) {
+        console.error('Error loading answers:', error);
+    }
+}
+
+
+function displayAnswers(answers) {
+    const container = document.getElementById('answers-container');
+    container.innerHTML = ''; // Clear existing answers
+
+    answers.forEach((answer) => {
+        const answerDiv = document.createElement('div');
+        answerDiv.classList.add('answer-entry', answer.status === 'pass' ? 'correct' : 'incorrect');
+        answerDiv.innerHTML = `
+            <p>Question: ${answer.questionText}</p>
+            <p>Your Answer: ${answer.userAnswer}</p>
+            <p>Correct Answer: ${answer.correctAnswer}</p>
+        `;
+        container.appendChild(answerDiv);
+    });
+
+    const modal = document.getElementById('answers-modal');
+    modal.style.display = 'block';
+
+    const closeButton = document.querySelector('.close-button');
+    closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+}
+
+//
+// --- QUIZZES LIST LOGIC ---
+//
+
+async function handquizzeslistPage() {
+    const userId = sessionStorage.getItem('userId');
+    const role = sessionStorage.getItem('userRole'); // Ensure the role is fetched correctly
+    const errorMessage = document.getElementById('div-error-message'); // Define errorMessage dynamically
+
+    try {
+        if (role === 'teacher') {
+            const quizzes = await getQuizzes();
+            displayEditQuizzes(quizzes['quizzes']);
+        } else {
+            errorMessage.textContent = 'You must have a teacher role. Please contact support.';
+            errorMessage.style.color = 'red';
+            document.body.prepend(errorMessage); // Add error message to the body
+        }
+    } catch (error) {
+        console.error('Error loading quizzes:', error);
+    }
+}
+
+function displayEditQuizzes(quizzes) {
+    const quizzesContainer = document.getElementById('quizzes-container-list');
+    quizzesContainer.innerHTML = ''; // Clear existing content
+
+    const createQuizButton = document.getElementById('create-quiz-button');
+    if (createQuizButton) {
+        createQuizButton.addEventListener('click', () => {
+            storeSelectedQuiz('');
+            window.location.href = 'create-edit-quiz.html';
+        });
+    }
+
+    if (!quizzes || quizzes.length === 0) {
+        const noQuizzesMessage = document.createElement('p');
+        noQuizzesMessage.textContent = 'No quizzes available.';
+        quizzesContainer.appendChild(noQuizzesMessage);
+        return;
+    }
+
+    quizzes.forEach((quiz) => {
+        const quizEntry = document.createElement('div');
+        quizEntry.className = 'quiz-entry';
+
+        const quizTitle = document.createElement('h3');
+        quizTitle.textContent = quiz.title;
+
+        const quizDescription = document.createElement('p');
+        quizDescription.textContent = quiz.description;
+
+        const editButton = document.createElement('button');
+        editButton.textContent = 'Edit Quiz';
+        editButton.addEventListener('click', () => {
+            storeSelectedQuiz(quiz.quizId);
+            window.location.href = 'create-edit-quiz.html';
+        });
+
+        quizEntry.appendChild(quizTitle);
+        quizEntry.appendChild(quizDescription);
+        quizEntry.appendChild(editButton);
+
+        quizzesContainer.appendChild(quizEntry);
+    });
+}
+
+//
+// --- QUIZZ CREATE EDIT LOGIC ---
+//
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+
+    const questionDiv = document.createElement('div');
+    questionDiv.classList.add('question-entry');
+
+    questionDiv.innerHTML = `
+        <label>Question Text:</label>
+        <input type="text" placeholder="Enter question text" required>
+        
+        <div class="options-container">
+            ${[1, 2, 3, 4].map(
+        (i) =>
+            `<div>
+                        <input type="radio" name="correct-option-${Date.now()}" value="${i}">
+                        <input type="text" placeholder="Option ${i}" required>
+                    </div>`
+    ).join('')}
+        </div>
+        <button type="button" class="remove-question-button">Remove Question</button>
+    `;
+
+    questionDiv.querySelector('.remove-question-button').addEventListener('click', () => {
+        questionDiv.remove();
+    });
+
+    container.appendChild(questionDiv);
+}
+
+async function loadQuiz(quizId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}`);
+        if (!response.ok) throw new Error('Failed to fetch quiz data');
+
+        const quiz = await response.json();
+        document.getElementById('quiz-title').value = quiz.title;
+        document.getElementById('quiz-description').value = quiz.description;
+    } catch (error) {
+        console.error('Error loading quiz:', error);
+    }
+}
+
+async function loadQuestions(quizId) {
+    try {
+        const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/questions`);
+        if (!response.ok) throw new Error('Failed to fetch questions');
+
+        const { questions } = await response.json();
+        questions.forEach((question) => {
+            addQuestion();
+            const questionDiv = document.querySelectorAll('.question-entry');
+            const lastQuestion = questionDiv[questionDiv.length - 1];
+
+            lastQuestion.querySelector('input[placeholder="Enter question text"]').value = question.questionText;
+            question.options.forEach((option, index) => {
+                lastQuestion.querySelectorAll('input[type="text"]')[index].value = option;
+            });
+        });
+    } catch (error) {
+        console.error('Error loading questions:', error);
+    }
+}
+
+async function saveQuiz() {
+    const quizId = sessionStorage.getItem('selectedQuizId');
+    const title = document.getElementById('quiz-title').value.trim();
+    const description = document.getElementById('quiz-description').value.trim();
+
+    if (!title || !description) {
+        alert('Quiz title and description are required.');
+        return;
+    }
+
+    try {
+        const quizPayload = { title, description };
+        const quizMethod = quizId ? 'PUT' : 'POST';
+        const quizEndpoint = quizId ? `${baseUrl}/${stage}/quiz/${quizId}` : `${baseUrl}/${stage}/quiz`;
+
+        // Save or update the quiz
+        const quizResponse = await fetch(quizEndpoint, {
+            method: quizMethod,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(quizPayload),
+        });
+
+        if (!quizResponse.ok) throw new Error('Failed to save quiz');
+        const quizData = await quizResponse.json();
+        const currentQuizId = quizId || quizData.quizId;
+
+        // Save questions
+        const { successCount, errorCount } = await saveQuestions(currentQuizId);
+
+        alert(`Quiz saved successfully! ${successCount} questions saved. ${errorCount} errors.`);
+        window.location.href = 'teacher-dashboard.html';
+    } catch (error) {
+        console.error('Error saving quiz:', error);
+        alert('Error saving quiz. Please try again.');
+    }
+}
+
+async function saveQuestions(quizId) {
+    const questionEntries = Array.from(document.querySelectorAll('.question-entry'));
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const [index, entry] of questionEntries.entries()) {
+        const questionText = entry.querySelector('input[placeholder="Enter question text"]').value.trim();
+        const options = Array.from(entry.querySelectorAll('.options-container input[type="text"]')).map(
+            (input) => input.value.trim()
+        );
+        const correctOptionIndex = Array.from(entry.querySelectorAll('.options-container input[type="radio"]')).findIndex(
+            (radio) => radio.checked
+        );
+
+        if (!questionText || options.some((opt) => !opt) || correctOptionIndex === -1) {
+            alert(`Question ${index + 1} has incomplete fields. Please fill out all fields.`);
+            errorCount++;
+            continue;
+        }
+
+        const questionPayload = {
+            questionText,
+            options,
+            correctAnswer: options[correctOptionIndex],
+        };
+
+        try {
+            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/question`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(questionPayload),
             });
 
-            // Add image and anchor elements to their parent element - quiz-options
-            quizOption.appendChild(quizImage);
-            quizOption.appendChild(quizTitle);
-
-            quizOption.setAttribute('class', 'quiz-option');
-
-            // Append the quiz-option div to the container (quiz-options)
-            quizzesContainer.appendChild(quizOption);
-        }
-    }
-}
-
-function displayQuizDescription() {
-    const quizDescription = loadSelectedQuizDescription();
-    document.getElementById('description-box').textContent = quizDescription;
-}
-
-function storeQuestions(questions) {
-    sessionStorage.setItem('questions', JSON.stringify(questions['questions']));
-}
-
-// Logic for moving from the description to the question page. An API call is made to retrieve questions for the quiz id selected by the user, and then the questions are stored in session, before navigating to the question page.
-function addStartQuizListener() {
-    const selectedQuizId = loadSelectedQuizId();
-    const startQuizButton = document.getElementById('start-quiz');
-    startQuizButton.addEventListener('click', async () => {
-        try {
-            // Call the async function to fetch questions
-            const questions = await getQuestions(selectedQuizId);
-
-            // Store the fetched questions in sessionStorage
-            storeQuestions(questions);
-
-            // Set the current question number. This will be used by the functions for question.html page to determine which question to show
-            sessionStorage.setItem('nextQuestion', 0);
-
-            sessionStorage.setItem('score', 0);
-
-            // Navigate to the new page after storing the data
-            window.location.href = 'question.html';
+            if (!response.ok) throw new Error(`Failed to save question ${index + 1}`);
+            successCount++;
         } catch (error) {
-            console.error('Failed to fetch questions:', error);
+            console.error(`Error saving question ${index + 1}:`, error);
+            errorCount++;
+        }
+    }
+
+    return { successCount, errorCount };
+}
+
+function addDeleteQuizListener() {
+    const deleteQuizButton = document.getElementById('delete-quiz-button');
+
+    deleteQuizButton.addEventListener('click', async () => {
+        const quizId = sessionStorage.getItem('selectedQuizId');
+
+        if (!quizId) {
+            alert('No quiz selected.');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this quiz? This action will hide the quiz from the interface.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/visibility`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ visible: false }),
+            });
+
+            if (!response.ok) throw new Error('Failed to delete quiz');
+
+            alert('Quiz successfully deleted (hidden from the interface).');
+            window.location.href = 'teacher-dashboard.html';
+        } catch (error) {
+            console.error('Error deleting quiz:', error);
+            alert('Error deleting quiz. Please try again.');
         }
     });
 }
 
-// The 1st part of the question page includes adding question text, number, as well as linking the possible options to the page's buttons.
-function displayQuestion() {
-    var questions = loadQuestions();
+//
+// --- HELPER FUNCTIONS ---
+//
 
-    if (questions != 0) {
-        // Attributes are always stored in session storage as strings so it's necessary to parse them as numbers before processing them
-        // Otherwise they'll be treated as strings and the results will be concatenated e.g. 1 + 1 will result in 11.
-        var currentQuestion = Number(sessionStorage.getItem('nextQuestion'));
-        sessionStorage.setItem('currentQuestion', currentQuestion);
-        var numOfQuestions = questions.length;
-
-        // If it's the last question, we should ensure that we end the question-answer page loop
-        if (currentQuestion == numOfQuestions - 1) {
-            sessionStorage.setItem('nextQuestion', -1);
-        } else {
-            sessionStorage.setItem('nextQuestion', currentQuestion + 1);
-        }
-
-        // Add the question numbering on top of the page (e.g. 1/4)
-        const questionNumberHeading = document.getElementById('heading-question-number');
-        questionNumberHeading.innerText = `${currentQuestion + 1}/${numOfQuestions}`;
-
-        // Add the question text to the page
-        const questionText = document.getElementById('heading-question-text');
-        questionText.innerText = questions[currentQuestion].questionText;
-
-        // For every button-choice, the style is reset and a click listener is attached
-        for (let i = 0; i < 4; i++) {
-            const buttonId = `btn-option-${i + 1}`;
-            const buttonOption = document.getElementById(buttonId);
-            buttonOption.textContent = questions[currentQuestion].options[i];
-
-            buttonOption.dataset.selected = 'false';
-
-            // Restore buttons to their initial style. This is important because the same elements are used for all questions of the quiz
-            // TODO: Refactor to take style from csse.g. using buttonOption.classList.add('answer-option');. It's not taking effect in the 2nd question onwards so should consider refactoring the buttons after in the evaluation part of the question page.
-            buttonOption.style.backgroundColor = 'white';
-            buttonOption.style.borderColor = '#a262e3';
-            buttonOption.style.fontWeight = 'normal';
-            buttonOption.style.borderWidth = '2px';
-            buttonOption.style.borderStyle = 'solid';
-
-            // Removing the button listener that was attached in the previous question. This is important as we're running this function multiple times
-            // and we don't want to end up with multiple listeners, all triggering separately.
-            if (currentQuestion != 0) {
-                buttonOption.removeEventListener('click', selectOptionListener);
-            }
-            buttonOption.addEventListener('click', selectOptionListener);
-        }
-    }
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    const formattedDate = date.toISOString().split('T')[0]; // Extracts 'YYYY-MM-DD'
+    const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${formattedDate} ${formattedTime}`;
 }
 
-// Function that runs when an option is selected. The user choice is saved and the button changes style to reflect the change.
-function selectOptionListener(event) {
-    // Toggle the value of the 'data-selected' attribute. This acts as a flag to determine if the specific button is clicked (the user selected this as a possible answer).
-    const isSelected = event.target.dataset.selected === 'true'; // Check current value
-    event.target.dataset.selected = isSelected ? 'false' : 'true'; // Flip the value
+function updateHomeLink() {
+    const userRole = sessionStorage.getItem('userRole');
+    const homeLink = document.getElementById('link-home');
 
-    // TODO: Refactor using a css class (e.g. selected) to increase code readability
-    // e.g. buttonOption.classList.toggle('selected'); // Add/remove the 'selected' class
-    if (event.target.dataset.selected === 'true') {
-        event.target.style.backgroundColor = '#f0f0f0';
-        event.target.style.borderColor = 'black';
+    if (userRole === 'teacher') {
+        homeLink.href = 'teacher-dashboard.html';
+    } else if (userRole === 'student') {
+        homeLink.href = 'homepage.html';
     } else {
-        event.target.style.backgroundColor = 'white';
-        event.target.style.borderColor = '#a262e3';
+        homeLink.href = 'index.html';
     }
-}
-
-// The 2nd part of the question page includes evaluating user choices against the correct answers and changing button styles to reflect the result.
-function evaluateAnswers() {
-    const submitButton = document.getElementById('btn-submit');
-    // mode is an HTML data-* attribute created to define the 'Submit' button's behaviour. It has the following states:
-    //  - question: This is the state when a new question is presented to the user. When the button is pressed in this state, the next state is 'answer', where the user's answers are submitted and evaluated against the correct answer(s) for the current question. The button's label in this mode is 'Submit'.
-    //  - answer: This is the state where the correct answers are shown. The button is used for navigating to the next question of the quiz. The button label is 'Next' and clicking the button will show the next question of the quiz.
-    //  - results: In this state, the current question is the last question. Clicking the button will navigate to the results page, ending the question-result loop. The button label is 'Results'.
-    submitButton.dataset.mode = 'question';
-
-    submitButton.addEventListener('click', (event) => {
-        var questions = loadQuestions();
-        var currentQuestion = Number(sessionStorage.getItem('currentQuestion'));
-
-        if (event.target.dataset.mode === 'question') {
-            for (let i = 0; i < 4; i++) {
-                const optionButton = document.getElementById(`btn-option-${i + 1}`);
-                // Make option buttons non clickable when the results are showing, as the answer can't be changed.
-                // Another choice (to removing the listener) would be to disable the button, but this would also change its style, according to the browser specifications, and changing it would require more code and wouldn't be a good practice.
-                optionButton.removeEventListener('click', selectOptionListener);
-
-                if (questions[currentQuestion].correctAnswer.includes(optionButton.textContent)) {
-                    if (optionButton.dataset.selected === 'true') {
-                        optionButton.style.backgroundColor = '#91DEC2';
-                        optionButton.style.borderColor = '#91DEC2';
-                        optionButton.style.fontWeight = 'bold';
-                        sessionStorage.setItem('score', Number(sessionStorage.getItem('score')) + 100); // Increase user score for finding the correct answer.
-                    } else {
-                        optionButton.style.backgroundColor = '#f0f0f0';
-                        optionButton.style.borderWidth = '4px'; // Set border width
-                        optionButton.style.borderStyle = 'dashed'; // Set border style (solid, dashed, etc.)
-                        optionButton.style.fontWeight = 'bold';
-                    }
-                } else {
-                    if (optionButton.dataset.selected === 'true') {
-                        optionButton.style.backgroundColor = '#F0C3C3';
-                        optionButton.style.borderColor = '#F0C3C3';
-                    }
-                }
-            }
-            if (Number(sessionStorage.getItem('nextQuestion')) != -1) {
-                event.target.textContent = 'Next';
-                event.target.dataset.mode = 'answer';
-            } else {
-                event.target.textContent = 'View Results';
-                event.target.dataset.mode = 'results';
-            }
-        } else if (event.target.dataset.mode === 'answer') {
-            event.target.textContent = 'Submit';
-            event.target.dataset.mode = 'question';
-            displayQuestion();
-        } else if (event.target.dataset.mode === 'results') {
-            window.location.href = 'results.html';
-        }
-    });
 }

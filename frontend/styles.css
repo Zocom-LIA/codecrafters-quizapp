@@ -1,11 +1,12 @@
 :root {
-    --header: #a262e3;
+    --header: #764abc;
 }
 
 html,
 body {
     height: 100%;
-    font-family: 'Poppins';font-size: 22px;
+    font-family: 'Poppins';
+    font-size: 22px;
 }
 
 body {
@@ -23,22 +24,25 @@ body {
     color: white;
 
     padding: 20px;
-   display: flex;
-   align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
 #navlist {
-        position: absolute;
-        width: 100%;
-        top: 1% ;
+    position: absolute;
+    width: 100%;
+    top: 1%;
 
 
-    }
- .navlist-right{
+}
 
-        float:right;
-        margin: 1%;
-    }
+.navlist-right {
+
+    float: right;
+    margin: 1%;
+}
+
 .logo img {
     width: 90px;
     height: 90px;
@@ -57,10 +61,11 @@ body {
 .footer {
     background-color: var(--header);
     color: white;
-    display: flex;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 5px;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }
 
 .quiz-section {
@@ -97,7 +102,7 @@ body {
 .quiz-option img {
     width: 100px;
     height: 100px;
-    margin-top:40%;
+    margin-top: 40%;
     margin-bottom: 20px;
 }
 

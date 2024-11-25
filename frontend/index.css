@@ -1,0 +1,74 @@
+/* index.css */
+
+/* Full-page gradient background */
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(1deg, #9d7dd4, #764abc);
+    color: white;
+    text-align: center;
+}
+
+/* Centered title styling */
+.title {
+    font-size: 3rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Login Box Styling */
+.container {
+    text-align: center;
+}
+
+.login-box {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 300px;
+    margin: auto;
+}
+
+.login-box h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.login-box input {
+    width: 92%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 10px;
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-box button:hover {
+    background-color: #7b52a3;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    display: none;
+    margin-top: 10px;
+}

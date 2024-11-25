@@ -6,39 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
     <link rel="stylesheet" href="./styles-homepage.css">
-    <title>Quiz app</title>
+    <title>Quiz App</title>
 </head>
 
 <body>
-
     <header class="header">
         <div id="navlist">
             <div class="navlist-right">
-                <img src="./images/Vector.png" alt="vector">
+                <a href="user-attempts.html">
+                    <img src="./images/Vector.png" alt="Home">
+                </a>
+                <a id="link-index" href="index.html">
+                    <img src="images/user.png" alt="Logout" class="logout-icon">
+                </a>
             </div>
         </div>
 
         <div class="logo">
-            <img src="./images/logo.png" alt="Quiz Logo">
+            <h2>Select a Quiz</h2>
         </div>
-
     </header>
-  
-    <div class="content">
-        <div class="quiz-section">
-            <div class="quiz-options" id="quizzes-container"></div>
-        </div>
-    </div>
+
+    <main class="content">
+        <!-- Section for displaying quizzes dynamically -->
+        <section class="quiz-section">
+            <div class="quiz-options" id="quizzes-container">
+                <!-- Quizzes will be dynamically populated here by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Quiz App</p>
+    </footer>
 
     <!-- Link to the external JavaScript file -->
     <script src="script.js"></script>
-
-    <div><br><br><br></div>
-
-
-    <footer class="footer">
-        <h4>Quiz app</h4>
-    </footer>
 </body>
 
 </html>
