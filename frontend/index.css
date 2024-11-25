@@ -1,25 +1,24 @@
-body {
+/* index.css */
+
+/* Full-page gradient background */
+body,
+html {
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    padding: 0;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(1deg, #9d7dd4, #764abc);
+    color: white;
+    text-align: center;
 }
 
-/* Background Styling */
-.background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('./images/background.jpg');
-    /* Replace with your image path */
-    background-size: cover;
-    background-position: center;
-    z-index: -1;
+/* Centered title styling */
+.title {
+    font-size: 3rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 /* Login Box Styling */
@@ -43,7 +42,7 @@ body {
 }
 
 .login-box input {
-    width: 100%;
+    width: 92%;
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ddd;

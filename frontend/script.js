@@ -126,7 +126,8 @@ function displayQuizzes(quizzes) {
         quizOption.className = 'quiz-option';
 
         const quizImage = document.createElement('img');
-        quizImage.src = `./images/${quiz.title.toLowerCase()}.png`;
+        // quizImage.src = `./images/${quiz.title.toLowerCase()}.png`;
+        quizImage.src = `./images/logo.png`;
         quizImage.alt = quiz.title;
 
         const quizTitle = document.createElement('a');
@@ -790,8 +791,7 @@ async function saveQuiz() {
         const { successCount, errorCount } = await saveQuestions(currentQuizId);
 
         alert(`Quiz saved successfully! ${successCount} questions saved. ${errorCount} errors.`);
-        // Uncomment to navigate back to the dashboard after saving
-        // window.location.href = 'teacher-dashboard.html';
+        window.location.href = 'teacher-dashboard.html';
     } catch (error) {
         console.error('Error saving quiz:', error);
         alert('Error saving quiz. Please try again.');
@@ -858,7 +858,7 @@ function addDeleteQuizListener() {
         }
 
         try {
-            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}`, {
+            const response = await fetch(`${baseUrl}/${stage}/quiz/${quizId}/visibility`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ visible: false }),
