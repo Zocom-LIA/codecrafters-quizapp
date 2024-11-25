@@ -1,0 +1,93 @@
+* {
+    margin: 0;
+    padding: 0;
+
+}
+
+header {
+    background-color: #a262e3;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+    position: relative;
+}
+
+main {
+    padding: 20px;
+}
+
+/* Error Message */
+.error-message {
+    color: red;
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* Create Quiz Button */
+.create-quiz-button {
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: block;
+    margin: 0 auto 20px auto;
+    /* Centered and with spacing */
+    transition: background-color 0.3s ease;
+}
+
+.create-quiz-button:hover {
+    background-color: #7b52a3;
+}
+
+#quizzes-container-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quiz-entry {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-entry h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.quiz-entry p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.quiz-entry button {
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.quiz-entry button:hover {
+    background-color: #7b52a3;
+}
+
+/* Home Icon */
+.home-logo img {
+    position: absolute;
+    left: 10px;
+    top: 15px;
+    width: 40px;
+    cursor: pointer;
+}

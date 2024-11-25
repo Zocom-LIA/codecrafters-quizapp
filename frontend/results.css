@@ -1,0 +1,77 @@
+:root {
+    --header: #764abc;
+}
+
+html,
+body {
+    background-color: #764abc;
+    height: 100%;
+    font-family: 'Poppins';
+    font-size: 22px;
+    color: white;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0%;
+
+    /* text-align: center;
+      justify-content: center; */
+}
+
+.header {
+    background-color: var(--header);
+    height: 5%;
+    color: white;
+
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo img {
+    width: 90px;
+    height: 90px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+.home-logo {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 48px;
+    cursor: pointer;
+}
+
+.user {
+    text-align: center;
+}
+
+#results-container {
+    text-align: center;
+}
+
+h1 {
+    text-align: center
+}
+
+.footer {
+    background-color: #764abc;
+    color: white;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}

@@ -1,0 +1,268 @@
+:root {
+    --header: #764abc;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: 'Poppins', sans-serif;
+    font-size: 22px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.header-question {
+    background-color: var(--header);
+    height: 40%;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+}
+
+.home-icon-link {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.home-icon-link:hover {
+    transform: scale(1.1);
+}
+
+.home-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.python-question img {
+    width: 90px;
+    height: 90px;
+}
+
+/* Center the question number at the top */
+.question-number {
+    position: absolute;
+    top: 10px;
+    /* Place the question number closer to the top */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Center it horizontally */
+}
+
+.question-number h3 {
+    margin: 0;
+}
+
+.question-text {
+    text-align: center;
+    margin: 0;
+    font-size: 24px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+.python-logo-to-description-page {
+    position: absolute;
+    top: 40%;
+    left: 5%;
+    width: 90px;
+    height: 90px;
+    cursor: pointer;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.answer-section {
+    width: 100%;
+}
+
+.answer-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 100px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.answer-option button {
+    width: 100%;
+    padding: 15px;
+    background-color: white;
+    border: 2px solid #a262e3;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 18px;
+}
+
+.answer-option button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Selected state */
+/* .selected {
+    background-color: #f0f0f0;
+    border-color: black;
+} */
+
+/* Move submit button closer to the footer */
+.submit-button {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    /* Reduced bottom margin to bring it closer to the footer */
+    padding: 15px 30px;
+    background-color: #a262e3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.submit-button:hover {
+    background-color: #8a4fb2;
+}
+
+.footer {
+    background-color: var(--header);
+    color: white;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
+
+/* General Button Styling */
+.btn-option {
+    background-color: white;
+    border: 2px solid #a262e3;
+    border-radius: 5px;
+    font-weight: normal;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    /* Smooth transitions for hover effects */
+}
+
+.btn-option:hover {
+    background-color: #f5f5f5;
+    /* Light hover effect */
+    border-color: #7b52a3;
+}
+
+/* Styling for Selected Option */
+.btn-option.selected {
+    background-color: #f0f0f0;
+    border-color: black;
+    font-weight: bold;
+}
+
+/* Styling for Correct Answer */
+.btn-option.correct {
+    background-color: #91DEC2;
+    border-color: #91DEC2;
+    font-weight: bold;
+    color: black;
+}
+
+/* Styling for Incorrect Answer */
+.btn-option.incorrect {
+    background-color: #F0C3C3;
+    border-color: #F0C3C3;
+    font-weight: bold;
+    color: black;
+}
+
+/* Styling for Disabled Buttons (After Submission) */
+.btn-option.disabled {
+    pointer-events: none;
+    /* Prevent further clicks */
+    opacity: 0.6;
+    /* Dim the button */
+}
+
+/* Submit and Next Button Styling */
+#btn-dynamic {
+    background-color: #764abc;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#btn-dynamic:hover {
+    background-color: #a262e3;
+}
+
+/* General Styling for Containers */
+#quizzes-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.quiz-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.quiz-option:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+}
+
+.quiz-option img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.quiz-option a {
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+}

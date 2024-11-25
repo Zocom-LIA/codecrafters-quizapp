@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="user-attempts.css">
+    <title>User Attempts</title>
+</head>
+
+<body>
+    <header>
+        <h1>Quiz Attempts</h1>
+        <a id="link-home" href="homepage.html">
+            <img src="./images/home.png" alt="Home" class="home-logo">
+        </a>
+    </header>
+
+    <main>
+        <select id="student-dropdown" style="display: none;">
+            <option value="" disabled selected>Select a student</option>
+        </select>
+        <div id="attempts-container"></div>
+    </main>
+
+    <!-- Modal for showing answers -->
+    <div id="answers-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Quiz Answers</h2>
+            <div id="answers-container"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

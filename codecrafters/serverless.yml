@@ -1,0 +1,323 @@
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: quizapp
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: codecrafters
+provider:
+  # for locally we will use dev once we finish and deploy we can change it to aws and add iamRoleStatements
+  name: aws
+  runtime: python3.12
+  region: eu-north-1
+  stage: ${opt:stage, 'dev'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 'arn:aws:dynamodb:eu-north-1:*:table/*'
+plugins:
+  - serverless-offline
+  - serverless-s3-sync
+
+# Use a separate environment for offline (local) vs. dev
+environment:
+  BASE_URL: ${self:custom.baseUrls.${self:provider.stage}}
+
+custom:
+  baseUrls:
+    local: http://localhost:3000  # for serverless-offline
+    dev: https://lx31hr5mn2.execute-api.eu-north-1.amazonaws.com  # dev base URL
+  s3Sync:
+    - bucketName: ${self:service}-${opt:stage, self:provider.stage}-website # e.g. codecrafters-dev-website
+      localDir: ../frontend # Our local static files directory (e.g., public or dist)
+      bucketPrefix: '' # We leave blank to sync at the root of the bucket
+
+# Seed data
+functions:
+  seedData:
+    handler: seed.seed_data
+    events:
+      - http:
+          path: seed
+          method: post
+
+  # User CRUD
+  createUser:
+    handler: user.create_user
+    events:
+      - http:
+          path: user
+          method: post
+
+  getUserById:
+    handler: user.get_user_by_id
+    events:
+      - http:
+          path: user/{userId}
+          method: get
+
+  getUserByUsername:
+    handler: user.get_user_by_username
+    events:
+      - http:
+          path: users/username/{userName}
+          method: get
+
+  getAllUsers:
+    handler: user.get_all_users
+    events:
+      - http:
+          path: user
+          method: get
+
+  updateUser:
+    handler: user.update_user
+    events:
+      - http:
+          path: user/{userId}
+          method: put
+
+  deleteUser:
+    handler: user.delete_user
+    events:
+      - http:
+          path: user/{userId}
+          method: delete
+  
+  listStudents:
+    handler: user.list_students
+    events:
+      - http:
+          path: user/students
+          method: get
+
+# User Attempts
+  createUserAttempt:
+    handler: attempt.create_user_attempt
+    events:
+      - http:
+          path: attempts
+          method: post
+
+  getUserAttempt:
+    handler: attempt.get_user_attempt
+    events:
+      - http:
+          path: attempts/{userId}/{quizId}/{attemptId}
+          method: get
+
+  listUserAttempt:
+    handler: attempt.list_user_attempts
+    events:
+      - http:
+          path: attempts/{userId}
+          method: get
+
+  getUserAttemptDetails:
+    handler: attempt.get_user_attempt_details
+    events:
+      - http:
+          path: attempts/details/{attemptId}
+          method: get
+
+  updateUserAttempt:
+    handler: attempt.update_user_attempt
+    events:
+      - http:
+          path: attempts/{userId}/{quizId}/{attemptId}
+          method: put
+  
+  # Questions
+  getCurrentQuestion:
+    handler: attempt.get_current_question
+    events:
+      - http:
+          path: quiz/progress/{userId}/{quizId}/{attemptId}
+          method: get
+
+  moveToNextQuestion:
+    handler: attempt.move_to_next_question
+    events:
+      - http:
+          path: quiz/progress/next
+          method: post
+
+# User Answers
+  createUserAnswer:
+    handler: answer.create_user_answer
+    events:
+      - http:
+          path: answers
+          method: post
+
+  getUserAnswers:
+    handler: answer.get_user_answers
+    events:
+      - http:
+          path: answers/{userId}/{quizId}/{attemptId}
+          method: get
+
+  # Quiz CRUD
+  createQuiz:
+    handler: quiz.create_quiz
+    events:
+      - http:
+          path: quiz
+          method: post
+
+  getQuizById:
+    handler: quiz.get_quiz_by_id
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: get
+
+  getAllQuizzes:
+    handler: quiz.get_all_quizzes
+    events:
+      - http:
+          path: quiz
+          method: get
+
+  updateQuiz:
+    handler: quiz.update_quiz
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: put
+
+  update_quiz_visibility:
+    handler: quiz.update_quiz_visibility
+    events:
+      - http:
+          path: quiz/{quizId}/visibility
+          method: patch
+
+  deleteQuiz:
+    handler: quiz.delete_quiz
+    events:
+      - http:
+          path: quiz/{quizId}
+          method: delete
+
+  # Question CRUD
+  createQuestion:
+    handler: question.create_question
+    events:
+      - http:
+          path: quiz/{quizId}/question
+          method: post
+
+  getQuestionsByQuiz:
+    handler: question.get_questions_by_quiz
+    events:
+      - http:
+          path: quiz/{quizId}/questions
+          method: get
+
+  updateQuestion:
+    handler: question.update_question
+    events:
+      - http:
+          path: quiz/{quizId}/question/{questionId}
+          method: put
+
+  deleteQuestion:
+    handler: question.delete_question
+    events:
+      - http:
+          path: quiz/{quizId}/question/{questionId}
+          method: delete
+  backfillUserAndQuizIds:
+    handler: backfill.handler
+    timeout: 20
+    memorySize: 128
+    events:
+      - http:
+          path: run-backfill
+          method: post
+resources:
+  Resources:
+    QuizTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: QuizTable
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S # Partition Key (Primary Key)
+          - AttributeName: SK
+            AttributeType: S # Sort Key
+          - AttributeName: userName
+            AttributeType: S # Attribute for existing GSI
+          - AttributeName: userId
+            AttributeType: S # Attribute for new GSI Partition Key
+          - AttributeName: quizId
+            AttributeType: S # Attribute for new GSI Sort Key
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH # Partition Key
+          - AttributeName: SK
+            KeyType: RANGE # Sort Key
+        GlobalSecondaryIndexes:
+          - IndexName: UserNameIndex
+            KeySchema:
+              - AttributeName: userName
+                KeyType: HASH
+              - AttributeName: SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: UserAttemptsIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH # GSI Partition Key
+              - AttributeName: quizId
+                KeyType: RANGE # GSI Sort Key (Optional)
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        SSESpecification:
+          SSEEnabled: true
+    WebsiteBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${opt:stage, self:provider.stage}-website
+        WebsiteConfiguration:
+          IndexDocument: homepage.html
+          ErrorDocument: error.html
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: WebsiteBucket
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:service}-${opt:stage, self:provider.stage}-website/*'
+
+
+  Outputs:
+      WebsiteURL:
+        Value:
+          Fn::GetAtt: [WebsiteBucket, WebsiteURL]
+        Description: URL of the static website
